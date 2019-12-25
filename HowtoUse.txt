@@ -1,0 +1,2 @@
+# To start MongoDB server
+sudo service mongod start

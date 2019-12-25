@@ -1,0 +1,5 @@
+flask==1.1.1
+ipinfo==3.0.0
+pymongo==3.10.0
+pyowm==2.10.0
+python-dotenv==0.10.3
