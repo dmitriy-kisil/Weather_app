@@ -4,6 +4,7 @@ import ipinfo
 import pyowm
 from datetime import datetime
 import os
+from pymongo import MongoClient, ReturnDocument
 from dotenv import load_dotenv, find_dotenv
 load_dotenv()
 
@@ -17,7 +18,6 @@ owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
 
 
 def get_db():
-    from pymongo import MongoClient
     client = MongoClient('localhost:27017')
     db = client.WeatherApp
     return db
@@ -35,30 +35,51 @@ def predict():
         else:
             ip = flask.request.remote_addr
         data['ip'] = ip
-        ip_address = "192.162.78.101"
+        # ip_address = "192.162.78.101"  # Ukraine
+        ip_address = "198.16.78.43"  # Netherlands
         data['ip'] = ip_address
         details = handler.getDetails(ip_address)
         data['country'] = details.country_name
         data['city'] = details.city
         data['latitude'] = details.latitude
         data['longitude'] = details.longitude
-        observation = owm.weather_at_place(data['city'] + ',' + data['country'])
-        w = observation.get_weather()
-        data['temperature'] = w.get_temperature('celsius')['temp']
-        # indicate that the request was a success
-        data["success"] = True
-        check_if_city_exists = db.locations.find_one({"city": details.city})
-        if not check_if_city_exists:
-            date_format = "%m/%d/%Y"
-            new_date = datetime.strftime(datetime.now(), date_format)
-            print(new_date)
-            db.locations.insert_one({"date": new_date, "city": details.city, "temperature": data['temperature']})
+        city_and_country = data['city'] + ',' + data['country']
+        date_format = "%m/%d/%Y"
+        new_date = datetime.strftime(datetime.now(), date_format)
+        print(new_date)
+        check_if_city_exists = db.locations.find_one({"cities": {"$regex": city_and_country}})
+        check_date = db.locations.find_one({"date": new_date})
+        if check_date and check_if_city_exists:
+            print("Nothing to do")
+            today = db.locations.find_one({"cities": {"$regex": city_and_country}})
+            find_index = today['cities'].index(city_and_country)
+            data['temperature'] = today['temperatures'][find_index]
+            # db.locations.delete_one({"date": new_date})
+        elif check_date:
+            observation = owm.weather_at_place(city_and_country)
+            w = observation.get_weather()
+            data['temperature'] = w.get_temperature('celsius')['temp']
+            db.locations.find_one_and_update({"date": new_date},
+                                             {"$push": {
+                                                 "cities": city_and_country,
+                                                 "temperatures": data['temperature']},
+                                             '$inc': {'number_of_cities': 1}},
+                                             upsert=True,
+                                             return_document=ReturnDocument.AFTER)
             print('Added new city!')
             print(db.locations.find_one()['_id'])
             data['id'] = str(db.locations.find_one()['_id'])
         else:
-            print('Remove an old city!')
-            db.locations.delete_one({"city": "Kharkiv"})
+            observation = owm.weather_at_place(city_and_country)
+            w = observation.get_weather()
+            data['temperature'] = w.get_temperature('celsius')['temp']
+            print("Create new date")
+            # db.locations.delete_one({"city": "Kharkiv"})
+            db.locations.insert_one({"date": new_date, "cities": [city_and_country],
+                                     "temperatures": [data['temperature']], 'number_of_cities': 1})
+
+        # indicate that the request was a success
+        data["success"] = True
 
     # return the data dictionary as a JSON response
     return flask.jsonify(data)
