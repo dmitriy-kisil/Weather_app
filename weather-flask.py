@@ -10,9 +10,13 @@ load_dotenv()
 
 # initialize our Flask application
 app = flask.Flask(__name__)
+# Add for hot-reload
+os.environ['FLASK_APP'] = "app"
+os.environ['FLASK_ENV'] = "development"
+# Add tokens for API
 ipinfo_token = os.environ['IPINFO_TOKEN']
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
-
+# Initialize third-party API
 handler = ipinfo.getHandler(ipinfo_token)
 owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
 
@@ -35,15 +39,22 @@ def predict():
         else:
             ip = flask.request.remote_addr
         data['ip'] = ip
-        # ip_address = "192.162.78.101"  # Ukraine
-        ip_address = "198.16.78.43"  # Netherlands
+        ip_address = "192.162.78.101"  # Ukraine
+        # ip_address = "198.16.78.43"  # Netherlands
         data['ip'] = ip_address
-        details = handler.getDetails(ip_address)
-        data['country'] = details.country_name
-        data['city'] = details.city
-        data['latitude'] = details.latitude
-        data['longitude'] = details.longitude
+        check_ip_address = db.locations.find_one({"ip_addresses": {"$regex": ip_address}})
+        if check_ip_address:
+            print("Found IP adress")
+            find_index = check_ip_address['ip_addresses'].index(ip_address)
+            data['country'] = check_ip_address['cities'][find_index].split(",")[1]
+            data['city'] = check_ip_address['cities'][find_index].split(",")[0]
+        else:
+            print("Call API to find city from an IP adress")
+            details = handler.getDetails(ip_address)
+            data['country'] = details.country_name
+            data['city'] = details.city
         city_and_country = data['city'] + ',' + data['country']
+
         date_format = "%m/%d/%Y"
         new_date = datetime.strftime(datetime.now(), date_format)
         print(new_date)
@@ -56,13 +67,15 @@ def predict():
             data['temperature'] = today['temperatures'][find_index]
             # db.locations.delete_one({"date": new_date})
         elif check_date:
+            print("Call API to get weather")
             observation = owm.weather_at_place(city_and_country)
             w = observation.get_weather()
             data['temperature'] = w.get_temperature('celsius')['temp']
             db.locations.find_one_and_update({"date": new_date},
                                              {"$push": {
                                                  "cities": city_and_country,
-                                                 "temperatures": data['temperature']},
+                                                 "temperatures": data['temperature'],
+                                                 "ip_addresses": data['ip']},
                                              '$inc': {'number_of_cities': 1}},
                                              upsert=True,
                                              return_document=ReturnDocument.AFTER)
@@ -70,12 +83,13 @@ def predict():
             print(db.locations.find_one()['_id'])
             data['id'] = str(db.locations.find_one()['_id'])
         else:
+            print("Call API to get weather")
             observation = owm.weather_at_place(city_and_country)
             w = observation.get_weather()
             data['temperature'] = w.get_temperature('celsius')['temp']
             print("Create new date")
             # db.locations.delete_one({"city": "Kharkiv"})
-            db.locations.insert_one({"date": new_date, "cities": [city_and_country],
+            db.locations.insert_one({"date": new_date, "cities": [city_and_country], "ip_addresses": [ip_address],
                                      "temperatures": [data['temperature']], 'number_of_cities': 1})
 
         # indicate that the request was a success
