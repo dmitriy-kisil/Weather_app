@@ -47,7 +47,7 @@ def predict():
         date_format = "%m/%d/%Y"
         new_date = datetime.strftime(datetime.now(), date_format)
         print(new_date)
-        check_if_city_exists = db.locations.find_one({"cities": {"$regex": city_and_country}})
+        check_if_city_exists = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
         check_date = db.locations.find_one({"date": new_date})
         if check_date and check_if_city_exists:
             print("Nothing to do")
