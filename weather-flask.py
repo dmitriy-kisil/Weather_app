@@ -13,6 +13,9 @@ app = flask.Flask(__name__)
 # Add for hot-reload
 os.environ['FLASK_APP'] = "app"
 os.environ['FLASK_ENV'] = "development"
+port = os.environ['PORT']
+# Add MongoDB URL:
+mongodb_url = os.environ['MONGODB_URL']
 # Add tokens for API
 ipinfo_token = os.environ['IPINFO_TOKEN']
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
@@ -22,7 +25,7 @@ owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
 
 
 def get_db():
-    client = MongoClient('localhost:27017')
+    client = MongoClient(mongodb_url)
     db = client.WeatherApp
     return db
 
@@ -35,12 +38,14 @@ def predict():
 
     if flask.request.method == "POST":
         if flask.request.headers.getlist("X-Forwarded-For"):
-            ip = flask.request.headers.getlist("X-Forwarded-For")[0]
+            ip_address = flask.request.headers.getlist("X-Forwarded-For")[0]
         else:
-            ip = flask.request.remote_addr
-        data['ip'] = ip
-        ip_address = "192.162.78.101"  # Ukraine
-        # ip_address = "198.16.78.43"  # Netherlands
+            ip_address = flask.request.remote_addr
+        data['ip'] = ip_address
+        # If testing from localhost, change IP address to a more suitable one
+        if ip_address == "127.0.0.1":
+            ip_address = "192.162.78.101"  # Ukraine
+            # ip_address = "198.16.78.43"  # Netherlands
         data['ip'] = ip_address
         check_ip_address = db.locations.find_one({"ip_addresses": {"$regex": ip_address}})
         if check_ip_address:
@@ -102,4 +107,5 @@ def predict():
 if __name__ == "__main__":
     print("please wait until server has fully started")
     db = get_db()
-    app.run(host='0.0.0.0', port='8000')
+
+    app.run(host='0.0.0.0', port=port)

@@ -1,2 +1,20 @@
 # To start MongoDB server
 sudo service mongod start
+# Repo for install docker on Ubuntu Eoan Ermine 19.10
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu disco stable"
+# Can't connect to docker from docker-compose
+https://stackoverflow.com/a/41998558/9461974
+# For connect to a remote Mlab mongodb:
+# pymongo - mongodb+srv “dnspython must be installed” error
+pip3 install pymongo[srv]
+# Helped set up docker-compose on Heroku:
+http://freija.net/2017/09/13/heroku_docker-mongodb.html
+# Name of app:
+prediction-weather-app
+# Build and release image to Heroku:
+heroku container:push web
+heroku container:release web
+# Check on site:
+https://prediction-weather-app.herokuapp.com/
+# If can't connect from Heroku server to MongoDB from MLab:
+go to your cluster, security -> Network Access -> IP Whitelist -> Edit -> Allow connection from anywhere

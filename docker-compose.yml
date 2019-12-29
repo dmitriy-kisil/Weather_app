@@ -1,0 +1,11 @@
+web:
+  build: .
+  command: python3 -u weather-flask.py
+  ports:
+    - "8000:8000"
+  volumes:
+    - .:/weather_app
+  links:
+    - db
+db:
+  image: mongo:4.2.2
