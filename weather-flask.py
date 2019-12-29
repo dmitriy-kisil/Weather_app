@@ -1,5 +1,6 @@
 # import the necessary packages
 import flask
+from flask_caching import Cache
 import ipinfo
 import pyowm
 from datetime import datetime
@@ -10,6 +11,8 @@ load_dotenv()
 
 # initialize our Flask application
 app = flask.Flask(__name__)
+# Add caching for app
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 # Add for hot-reload
 os.environ['FLASK_APP'] = "app"
 os.environ['FLASK_ENV'] = "development"
@@ -31,6 +34,7 @@ def get_db():
 
 
 @app.route("/predict/", methods=["POST"])
+@cache.cached(timeout=50)
 def predict():
     # initialize the data dictionary that will be returned from the
     # view
@@ -42,6 +46,7 @@ def predict():
         else:
             ip_address = flask.request.remote_addr
         data['ip'] = ip_address
+        print(data['ip'])
         # If testing from localhost, change IP address to a more suitable one
         if ip_address == "127.0.0.1":
             ip_address = "192.162.78.101"  # Ukraine
