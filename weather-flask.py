@@ -9,6 +9,8 @@ from pymongo import MongoClient, ReturnDocument
 from dotenv import load_dotenv, find_dotenv
 load_dotenv()
 
+# See prints from docker console
+os.environ['PYTHONUNBUFFERED'] = '1'
 # initialize our Flask application
 app = flask.Flask(__name__)
 # Add caching for app
@@ -47,8 +49,8 @@ def predict():
             ip_address = flask.request.remote_addr
         data['ip'] = ip_address
         print(data['ip'])
-        # If testing from localhost, change IP address to a more suitable one
-        if ip_address == "127.0.0.1":
+        # If testing from localhost or inside docker-compose, change IP address to a more suitable one
+        if ip_address == "127.0.0.1" or ip_address == "172.17.0.1":
             ip_address = "192.162.78.101"  # Ukraine
             # ip_address = "198.16.78.43"  # Netherlands
         data['ip'] = ip_address
