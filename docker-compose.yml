@@ -1,6 +1,6 @@
 web:
   build: .
-  command: python3 -u weather-flask.py
+  command: python3 -u weather_flask.py
   ports:
     - "8000:8000"
   volumes:
