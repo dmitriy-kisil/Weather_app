@@ -70,7 +70,7 @@ def predict():
         city_and_country = data['city'] + ',' + data['country']
 
         date_format = "%m/%d/%Y"
-        new_date = datetime.strftime(datetime.now()-timedelta(days=1), date_format)
+        new_date = datetime.strftime(datetime.now(), date_format)
         print(new_date)
         check_if_city_exists = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
         check_if_city_exists_but_no_ip = db.locations.find_one({"date": new_date,
@@ -127,6 +127,7 @@ def predict():
             db.locations.insert_one({"date": new_date, "cities": [city_and_country], "ip_addresses": [[ip_address]],
                                      "temperatures": [data['temperature']], 'number_of_cities': 1})
         data["predict_temp"] = db.locations.find_one({'date': new_date})['predicted_temp'][city_and_country]
+        data["today"] = new_date
         # indicate that the request was a success
         data["success"] = True
 
