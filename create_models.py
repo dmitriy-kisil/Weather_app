@@ -95,7 +95,7 @@ if __name__ == "__main__":
         os.makedirs(directory_for_storing_weights)
 
     date_format = "%m/%d/%Y"
-    new_date = datetime.strftime(datetime.now()-timedelta(days=2), date_format)
+    new_date = datetime.strftime(datetime.now(), date_format)
     cities = db.locations.find_one({'date': new_date})['cities']
     print(cities)
     print('Make predictions')

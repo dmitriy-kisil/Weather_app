@@ -8,6 +8,7 @@ from datetime import timedelta
 import os
 from pymongo import MongoClient, ReturnDocument
 from dotenv import load_dotenv, find_dotenv
+
 load_dotenv()
 
 # See prints from docker console
@@ -37,7 +38,7 @@ def get_db():
 
 
 @app.route("/predict/", methods=["POST"])
-@cache.cached(timeout=50)
+@cache.cached(timeout=1)
 def predict():
     # initialize the data dictionary that will be returned from the
     # view
@@ -48,18 +49,27 @@ def predict():
             ip_address = flask.request.headers.getlist("X-Forwarded-For")[0]
         else:
             ip_address = flask.request.remote_addr
-        data['ip'] = ip_address
-        print(data['ip'])
         # If testing from localhost or inside docker-compose, change IP address to a more suitable one
         if ip_address == "127.0.0.1" or ip_address == "172.17.0.1":
-            ip_address = "192.162.78.101"  # Ukraine
-            # ip_address = "178.150.147.148"  # another Ukraine address
+            # ip_address = "192.162.78.101"  # Ukraine
+            ip_address = "178.150.147.148"  # another Ukraine address
             # ip_address = "198.16.78.43"  # Netherlands
+        date_format = "%m/%d/%Y"
+        new_date = datetime.strftime(datetime.now(), date_format)
+        print(new_date)
         data['ip'] = ip_address
-        check_ip_address = db.locations.find_one({"ip_addresses": {"$regex": ip_address}})
+        print(data['ip'])
+        check_ip_address = db.locations.find_one({"date": new_date})
+        ip_address_exists_in_db = False
         if check_ip_address:
+            if check_ip_address.get('ip_addresses'):
+                if any(ip_address in sl for sl in check_ip_address['ip_addresses']):
+                    ip_address_exists_in_db = True
+        if ip_address_exists_in_db is True:
             print("Found IP adress")
-            find_index = check_ip_address['ip_addresses'].index(ip_address)
+            for c, v in enumerate(check_ip_address['ip_addresses']):
+                if ip_address in v:
+                    find_index = c
             data['country'] = check_ip_address['cities'][find_index].split(",")[1]
             data['city'] = check_ip_address['cities'][find_index].split(",")[0]
         else:
@@ -69,18 +79,21 @@ def predict():
             data['city'] = details.city
         city_and_country = data['city'] + ',' + data['country']
 
-        date_format = "%m/%d/%Y"
-        new_date = datetime.strftime(datetime.now(), date_format)
-        print(new_date)
         check_if_city_exists = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
         check_if_city_exists_but_no_ip = db.locations.find_one({"date": new_date,
-                                                                "cities": {"$regex": city_and_country},
-                                                                "ip_addresses": {"$ne": ip_address}})
+                                                                "cities": {"$regex": city_and_country}})
+        no_ip = True
+        if check_if_city_exists_but_no_ip:
+            if check_if_city_exists_but_no_ip.get('ip_addresses'):
+                if any(ip_address in sl for sl in check_if_city_exists_but_no_ip['ip_addresses']):
+                    no_ip = False
         print(f"Check for ip: {check_if_city_exists_but_no_ip}")
-        if check_if_city_exists and check_if_city_exists_but_no_ip:
+        if check_if_city_exists and no_ip:
             print(f"Add current IP: {ip_address} to city: {city_and_country}")
             today = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
-            find_index = today['cities'].index(city_and_country)
+            for c, v in enumerate(today['cities']):
+                if city_and_country in v:
+                    find_index = c
             print(f"Current index: {find_index}")
             data['temperature'] = today['temperatures'][find_index]
             current_ip = today['ip_addresses'][find_index]
@@ -88,7 +101,7 @@ def predict():
             new_ip = current_ip + [ip_address]
             print(new_ip)
             one = db.locations.find_one_and_update({"date": new_date},
-                                                   {'$push': {'ip_addresses.$[element]': ip_address}},
+                                                   {'$addToSet': {'ip_addresses.$[element]': ip_address}},
                                                    array_filters=[{"element": {'$eq': current_ip}}],
                                                    upsert=True,
                                                    return_document=ReturnDocument.AFTER)
@@ -97,7 +110,10 @@ def predict():
         check_date = db.locations.find_one({"date": new_date})
         if check_date and check_if_city_exists:
             print("Nothing to do")
+            import time
+            start = time.time()
             today = db.locations.find_one({"cities": {"$regex": city_and_country}})
+            print(f"Time spend on one query: {time.time() - start}")
             find_index = today['cities'].index(city_and_country)
             data['temperature'] = today['temperatures'][find_index]
             # db.locations.delete_one({"date": new_date})
@@ -126,6 +142,12 @@ def predict():
             # db.locations.delete_one({"city": "Kharkiv"})
             db.locations.insert_one({"date": new_date, "cities": [city_and_country], "ip_addresses": [[ip_address]],
                                      "temperatures": [data['temperature']], 'number_of_cities': 1})
+        if db.locations.find_one({'date': new_date, f'predicted_temp.{city_and_country}': {'$exists': True}}) is not None:
+            print("Add predicted weather temperatures to response")
+        else:
+            print("Don't found predicted temperatures, create a new one")
+            from subprocess import call
+            call(["python3", "create_models.py"])
         data["predict_temp"] = db.locations.find_one({'date': new_date})['predicted_temp'][city_and_country]
         data["today"] = new_date
         # indicate that the request was a success
