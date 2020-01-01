@@ -59,7 +59,10 @@ def predict():
         print(new_date)
         data['ip'] = ip_address
         print(data['ip'])
-        check_ip_address = db.locations.find_one({"date": new_date})
+        check_date = db.locations.find_one({"date": new_date})
+        check_ip_address = check_date
+        new_query = None
+
         ip_address_exists_in_db = False
         if check_ip_address:
             if check_ip_address.get('ip_addresses'):
@@ -78,19 +81,24 @@ def predict():
             data['country'] = details.country_name
             data['city'] = details.city
         city_and_country = data['city'] + ',' + data['country']
-
-        check_if_city_exists = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
-        check_if_city_exists_but_no_ip = db.locations.find_one({"date": new_date,
-                                                                "cities": {"$regex": city_and_country}})
+        check_if_city_exists = check_date
+        city_exists = False
+        if check_if_city_exists:
+            if check_if_city_exists.get('cities'):
+                if city_and_country not in check_if_city_exists['cities']:
+                    city_exists = False
+                else:
+                    city_exists = True
+        # check_if_city_exists = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
         no_ip = True
-        if check_if_city_exists_but_no_ip:
-            if check_if_city_exists_but_no_ip.get('ip_addresses'):
-                if any(ip_address in sl for sl in check_if_city_exists_but_no_ip['ip_addresses']):
+        if city_exists:
+            if check_if_city_exists.get('ip_addresses'):
+                if any(ip_address in sl for sl in check_if_city_exists['ip_addresses']):
                     no_ip = False
-        print(f"Check for ip: {check_if_city_exists_but_no_ip}")
-        if check_if_city_exists and no_ip:
+        print(f"Check for ip: {check_if_city_exists}")
+        if city_exists and no_ip:
             print(f"Add current IP: {ip_address} to city: {city_and_country}")
-            today = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
+            today = check_if_city_exists
             for c, v in enumerate(today['cities']):
                 if city_and_country in v:
                     find_index = c
@@ -107,13 +115,9 @@ def predict():
                                                    return_document=ReturnDocument.AFTER)
             print(one)
             # db.locations.delete_one({"date": new_date})
-        check_date = db.locations.find_one({"date": new_date})
-        if check_date and check_if_city_exists:
+        if check_date and city_exists:
             print("Nothing to do")
-            import time
-            start = time.time()
-            today = db.locations.find_one({"cities": {"$regex": city_and_country}})
-            print(f"Time spend on one query: {time.time() - start}")
+            today = check_if_city_exists
             find_index = today['cities'].index(city_and_country)
             data['temperature'] = today['temperatures'][find_index]
             # db.locations.delete_one({"date": new_date})
@@ -122,14 +126,14 @@ def predict():
             observation = owm.weather_at_place(city_and_country)
             w = observation.get_weather()
             data['temperature'] = w.get_temperature('celsius')['temp']
-            db.locations.find_one_and_update({"date": new_date},
-                                             {"$push": {
-                                                 "cities": city_and_country,
-                                                 "temperatures": data['temperature'],
-                                                 "ip_addresses": [data['ip']]},
-                                             '$inc': {'number_of_cities': 1}},
-                                             upsert=True,
-                                             return_document=ReturnDocument.AFTER)
+            new_query = db.locations.find_one_and_update({"date": new_date},
+                                                         {"$push": {
+                                                             "cities": city_and_country,
+                                                             "temperatures": data['temperature'],
+                                                             "ip_addresses": [data['ip']]},
+                                                         '$inc': {'number_of_cities': 1}},
+                                                         upsert=True,
+                                                         return_document=ReturnDocument.AFTER)
             print('Added new city!')
             print(db.locations.find_one()['_id'])
             data['id'] = str(db.locations.find_one()['_id'])
@@ -140,16 +144,28 @@ def predict():
             data['temperature'] = w.get_temperature('celsius')['temp']
             print("Create new date")
             # db.locations.delete_one({"city": "Kharkiv"})
-            db.locations.insert_one({"date": new_date, "cities": [city_and_country], "ip_addresses": [[ip_address]],
+            new_query = db.locations.insert_one({"date": new_date, "cities": [city_and_country], "ip_addresses": [[ip_address]],
                                      "temperatures": [data['temperature']], 'number_of_cities': 1})
-        if db.locations.find_one({'date': new_date, f'predicted_temp.{city_and_country}': {'$exists': True}}) is not None:
-            print("Add predicted weather temperatures to response")
-        else:
+
+        # if new_query.get('predicted_temp'):
+        #     if new_query['predicted_temp'].get(city_and_country):
+        #         data_temp = new_query['predicted_temp'][city_and_country]
+        #         print("Add predicted weather temperatures to response")
+        # else:
+        #     print("Don't found predicted temperatures, create a new one")
+        #     from subprocess import call
+        #     call(["python3", "create_models.py"])
+        if new_query:
             print("Don't found predicted temperatures, create a new one")
             from subprocess import call
             call(["python3", "create_models.py"])
-        data["predict_temp"] = db.locations.find_one({'date': new_date})['predicted_temp'][city_and_country]
+            data_temp = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
+        else:
+            print("Add predicted weather temperatures to response")
+            data_temp = check_if_city_exists
+        data["predict_temp"] = data_temp['predicted_temp'][city_and_country]
         data["today"] = new_date
+        # db.locations.delete_one({"date": new_date})
         # indicate that the request was a success
         data["success"] = True
 
@@ -160,5 +176,4 @@ def predict():
 if __name__ == "__main__":
     print("please wait until server has fully started")
     db = get_db()
-
     app.run(host='0.0.0.0', port=port)

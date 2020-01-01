@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
         y = [i["temperatures"][find_index] for i in city_data]
         y = []
-        for c,v in enumerate(X):
+        for c, v in enumerate(X):
             find_index = db.locations.find_one({"date": v, "cities": city})['cities'].index(city)
             y.append(db.locations.find_one({"date": v, "cities": city})['temperatures'][find_index])
 
