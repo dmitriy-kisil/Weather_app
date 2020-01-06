@@ -78,10 +78,14 @@ if __name__ == "__main__":
     new_date = datetime.strftime(datetime.now(), date_format)
     # For testing purpose
     # db.locations.delete_one({"date": new_date})
+
     find_today = db.locations.find_one({'date': new_date})
     if not find_today:
         print('Today is not found, create a new one')
-        previous_day = datetime.strftime(datetime.now()-timedelta(days=1), date_format)
+        all_dates = list(db.locations.find({}, {'date': 1, '_id': 0}))
+        all_dates = [i['date'] for i in all_dates]
+        the_most_recent_date = all_dates[-1]
+        previous_day = the_most_recent_date
         get_previous_day = db.locations.find_one({'date': previous_day})
         prev_cities = get_previous_day['cities']
         prev_ips = get_previous_day['ip_addresses']
@@ -117,8 +121,9 @@ if __name__ == "__main__":
             y = [i["temperatures"][find_index] for i in city_data]
             y = []
             for c, v in enumerate(X):
-                find_index = db.locations.find_one({"date": v, "cities": city})['cities'].index(city)
-                y.append(db.locations.find_one({"date": v, "cities": city})['temperatures'][find_index])
+                one_city = db.locations.find_one({"date": v, "cities": city})
+                find_index = one_city['cities'].index(city)
+                y.append(one_city['temperatures'][find_index])
 
             # y = [db.locations.find_one({"date": i, "cities": city})['temperatures'][find_index] for i in X]
             print(y)

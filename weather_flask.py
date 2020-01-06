@@ -62,6 +62,7 @@ def predict():
         check_date = db.locations.find_one({"date": new_date})
         check_ip_address = check_date
         new_query = None
+        # db.locations.delete_one({"date": new_date})
 
         ip_address_exists_in_db = False
         if check_ip_address:
@@ -146,6 +147,7 @@ def predict():
             # db.locations.delete_one({"city": "Kharkiv"})
             new_query = db.locations.insert_one({"date": new_date, "cities": [city_and_country], "ip_addresses": [[ip_address]],
                                      "temperatures": [data['temperature']], 'number_of_cities': 1})
+            # db.locations.delete_one({"date": new_date})
 
         # if new_query.get('predicted_temp'):
         #     if new_query['predicted_temp'].get(city_and_country):

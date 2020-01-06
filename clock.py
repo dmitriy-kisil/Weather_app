@@ -17,7 +17,7 @@ sched = BlockingScheduler(timezone="Europe/Kiev")
 #     cmd = "python3 create_new_day.py"
 #     subprocess.call(cmd, shell=True)
 
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=18, minute=40)
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=18, minute=10)
 def scheduled_job():
     """Schedule a job."""
     print('This job is run every one day.')
