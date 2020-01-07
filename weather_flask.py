@@ -38,7 +38,7 @@ def get_db():
 
 
 @app.route("/predict/", methods=["POST"])
-@cache.cached(timeout=1)
+@cache.cached(timeout=50)
 def predict():
     # initialize the data dictionary that will be returned from the
     # view

@@ -80,6 +80,12 @@ if __name__ == "__main__":
     # db.locations.delete_one({"date": new_date})
 
     find_today = db.locations.find_one({'date': new_date})
+    if find_today:
+        if not find_today.get('predicted_temp'):
+            print('Today partially exists, for create a prediction remove today is required')
+            db.locations.delete_one({"date": new_date})
+            print('Today removed successfully')
+            find_today = None
     if not find_today:
         print('Today is not found, create a new one')
         all_dates = list(db.locations.find({}, {'date': 1, '_id': 0}))
