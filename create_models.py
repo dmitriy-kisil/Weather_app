@@ -52,6 +52,7 @@ from weather_flask import get_db
 # y_pred = model.predict(X_ten_days)
 # print('predicted response:', y_pred, sep='\n')
 
+
 def predict_one_day(selected_date, model, X, y):
     today = datetime.strptime(selected_date, date_format)
     one_day = today + timedelta(days=1)
@@ -63,6 +64,7 @@ def predict_one_day(selected_date, model, X, y):
     print('predicted response:', y_pred, sep='\n')
     return date_data, predicted_data
 
+
 def predict_seven_days(selected_date, model, X, y):
     today = datetime.strptime(selected_date, date_format)
     seven_days = [today + timedelta(days=x) for x in range(1, 8)]
@@ -73,6 +75,7 @@ def predict_seven_days(selected_date, model, X, y):
     date_data, predicted_data = prep_seven_days, y_pred
     print('predicted response:', y_pred, sep='\n')
     return date_data, predicted_data
+
 
 def predict_ten_days(selected_date, model, X, y):
     today = datetime.strptime(selected_date, date_format)

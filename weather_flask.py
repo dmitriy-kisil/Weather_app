@@ -165,6 +165,9 @@ def predict():
         else:
             print("Add predicted weather temperatures to response")
             data_temp = check_if_city_exists
+        if not data_temp['predicted_temp'].get(city_and_country):
+            data_temp['predicted_temp'][city_and_country] = 'Come tomorrow to get predictions'
+        data.pop("id", None)
         data["predict_temp"] = data_temp['predicted_temp'][city_and_country]
         data["today"] = new_date
         # db.locations.delete_one({"date": new_date})
