@@ -6,7 +6,9 @@ import os
 cmd = "python3 weather_flask.py"
 print("Run weather app")
 weather_app_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-
+print('Update DB')
+cmd = "python3 create_new_day.py"
+subprocess.call(cmd, shell=True)
 sched = BlockingScheduler(timezone="Europe/Kiev")
 
 # For testing purpose
