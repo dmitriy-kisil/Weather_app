@@ -1,5 +1,11 @@
 web:
   build: .
+  environment:
+    # See prints from docker console
+    PYTHON_UNBUFFERED: 1
+    # Add for hot-reload
+    FLASK_APP: "app"
+    FLASK_ENV: "development"
   command: python3 -u clock.py
   ports:
     - "8000:8000"
@@ -7,5 +13,8 @@ web:
     - .:/weather_app
   links:
     - db
+    - tensorflow
 db:
   image: mongo:4.2.2
+tensorflow:
+  image: tensorflow/tensorflow:latest-gpu-jupyter

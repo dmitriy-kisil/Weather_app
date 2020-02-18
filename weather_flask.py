@@ -11,15 +11,10 @@ from dotenv import load_dotenv, find_dotenv
 
 load_dotenv()
 
-# See prints from docker console
-os.environ['PYTHONUNBUFFERED'] = '1'
 # initialize our Flask application
 app = flask.Flask(__name__)
 # Add caching for app
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
-# Add for hot-reload
-os.environ['FLASK_APP'] = "app"
-os.environ['FLASK_ENV'] = "development"
 port = os.environ['PORT']
 # Add MongoDB URL:
 mongodb_url = os.environ['MONGODB_URL']
