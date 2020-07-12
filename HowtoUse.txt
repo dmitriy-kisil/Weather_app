@@ -12,9 +12,14 @@ http://freija.net/2017/09/13/heroku_docker-mongodb.html
 # Name of app:
 prediction-weather-app
 # Build and release image to Heroku:
+heroku container:login
 heroku container:push web
 heroku container:release web
 # Check on site:
 https://prediction-weather-app.herokuapp.com/
 # If can't connect from Heroku server to MongoDB from MLab:
 go to your cluster, security -> Network Access -> IP Whitelist -> Edit -> Allow connection from anywhere
+# Install Heroku CLI
+sudo snap install --classic heroku && echo 'export PATH=$PATH:/snap/bin' >> ~/.bashrc && source ~/.bashrc
+# Copy weights for models from Heroku dyno
+heroku ps:copy weights/ --app prediction-weather-app

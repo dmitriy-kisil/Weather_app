@@ -22,7 +22,7 @@ def predict_one_day(selected_date, model, X, y):
     today = datetime.strptime(selected_date, date_format)
     one_day = today + timedelta(days=1)
     prep_one_day = datetime.strftime(one_day, date_format)
-    X_one_day = pd.get_dummies(prep_one_day)
+    X_one_day = np.zeros((1, 1))
     y_pred = model.predict(X_one_day)
     y_pred = [round(float(i), 2) for i in list(y_pred)]
     date_data, predicted_data = [prep_one_day], y_pred
