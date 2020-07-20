@@ -168,9 +168,10 @@ def predict():
         # db.locations.delete_one({"date": new_date})
         # indicate that the request was a success
         data["success"] = True
-
+    response = flask.jsonify(data)
+    response.headers.add("Access-Control-Allow-Origin", "*")
     # return the data dictionary as a JSON response
-    return flask.jsonify(data)
+    return response
 
 
 if __name__ == "__main__":
