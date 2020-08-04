@@ -59,7 +59,7 @@ def predict_one_day(selected_date, model, X, y):
     prep_one_day = datetime.strftime(one_day, date_format)
     X_one_day = np.zeros((1, 1))
     y_pred = model.predict(X_one_day)
-    y_pred = [round(float(i), 2) for i in list(y_pred)]
+    y_pred = [int(i) for i in list(y_pred)]
     date_data, predicted_data = [prep_one_day], y_pred
     print('predicted response:', y_pred, sep='\n')
     return date_data, predicted_data
@@ -71,7 +71,7 @@ def predict_seven_days(selected_date, model, X, y):
     prep_seven_days = [datetime.strftime(i, date_format) for i in seven_days]
     X_seven_days = le.fit_transform(prep_seven_days).reshape(-1, 1)
     y_pred = model.predict(X_seven_days)
-    y_pred = [round(float(i), 2) for i in list(y_pred)]
+    y_pred = [int(i) for i in list(y_pred)]
     date_data, predicted_data = prep_seven_days, y_pred
     print('predicted response:', y_pred, sep='\n')
     return date_data, predicted_data
@@ -83,7 +83,7 @@ def predict_ten_days(selected_date, model, X, y):
     prep_ten_days = [datetime.strftime(i, date_format) for i in ten_days]
     X_ten_days = le.fit_transform(prep_ten_days).reshape(-1, 1)
     y_pred = model.predict(X_ten_days)
-    y_pred = [round(float(i), 2) for i in list(y_pred)]
+    y_pred = [int(i) for i in list(y_pred)]
     date_data, predicted_data = prep_ten_days, y_pred
     print('predicted response:', y_pred, sep='\n')
     return date_data, predicted_data

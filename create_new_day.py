@@ -24,7 +24,7 @@ def predict_one_day(selected_date, model, X, y):
     prep_one_day = datetime.strftime(one_day, date_format)
     X_one_day = np.zeros((1, 1))
     y_pred = model.predict(X_one_day)
-    y_pred = [round(float(i), 2) for i in list(y_pred)]
+    y_pred = [int(i) for i in list(y_pred)]
     date_data, predicted_data = [prep_one_day], y_pred
     print('predicted response:', y_pred, sep='\n')
     return date_data, predicted_data
@@ -36,7 +36,7 @@ def predict_seven_days(selected_date, model, X, y):
     prep_seven_days = [datetime.strftime(i, date_format) for i in seven_days]
     X_seven_days = le.fit_transform(prep_seven_days).reshape(-1, 1)
     y_pred = model.predict(X_seven_days)
-    y_pred = [round(float(i), 2) for i in list(y_pred)]
+    y_pred = [int(i) for i in list(y_pred)]
     date_data, predicted_data = prep_seven_days, y_pred
     print('predicted response:', y_pred, sep='\n')
     return date_data, predicted_data
@@ -48,7 +48,7 @@ def predict_ten_days(selected_date, model, X, y):
     prep_ten_days = [datetime.strftime(i, date_format) for i in ten_days]
     X_ten_days = le.fit_transform(prep_ten_days).reshape(-1, 1)
     y_pred = model.predict(X_ten_days)
-    y_pred = [round(float(i), 2) for i in list(y_pred)]
+    y_pred = [int(i) for i in list(y_pred)]
     date_data, predicted_data = prep_ten_days, y_pred
     print('predicted response:', y_pred, sep='\n')
     return date_data, predicted_data
@@ -92,11 +92,13 @@ if __name__ == "__main__":
         all_dates = [i['date'] for i in all_dates]
         the_most_recent_date = all_dates[-1]
         previous_day = the_most_recent_date
+        # previous_day = datetime.strftime(datetime.now() - timedelta(days=1), date_format)
         get_previous_day = db.locations.find_one({'date': previous_day})
         prev_cities = get_previous_day['cities']
         prev_ips = get_previous_day['ip_addresses']
         prev_number_of_cities = get_previous_day['number_of_cities']
         new_temperatures = get_weather(prev_cities)
+        new_temperatures = [int(i) for i in new_temperatures]
         cities = prev_cities
         db.locations.insert_one({"date": new_date, 'cities': prev_cities, 'ip_addresses': prev_ips,
                                  'temperatures': new_temperatures, 'number_of_cities': prev_number_of_cities})

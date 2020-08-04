@@ -4,6 +4,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Flatten
 from tensorflow.keras.layers import ConvLSTM2D
+from sklearn.metrics import mean_absolute_error
 
 df = pd.read_csv('city_data2.csv', index_col=0)
 
@@ -51,3 +52,4 @@ x_input = x_input.reshape((1, n_seq, 1, n_steps_inner, n_features))
 yhat = model.predict(x_input, verbose=0)
 print(yhat)
 print(y_true)
+print(mean_absolute_error(y_true, yhat))

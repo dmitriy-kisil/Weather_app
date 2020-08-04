@@ -3,6 +3,7 @@ import pandas as pd
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dense
+from sklearn.metrics import mean_absolute_error
 
 df = pd.read_csv('city_data2.csv', index_col=0)
 
@@ -46,3 +47,6 @@ x_input = x_input.reshape((1, n_steps_in, n_features))
 yhat = model.predict(x_input, verbose=0)
 print(yhat)
 print(y_true)
+yhat = [yhat[0][0]]
+y_true = [y_true.to_numpy()[0]]
+print(mean_absolute_error(y_true, yhat))
