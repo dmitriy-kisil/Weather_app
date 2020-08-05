@@ -64,6 +64,7 @@ def predict():
             if check_ip_address.get('ip_addresses'):
                 if any(ip_address in sl for sl in check_ip_address['ip_addresses']):
                     ip_address_exists_in_db = True
+        # ip_address_exists_in_db = False  # for testing
         if ip_address_exists_in_db is True:
             print("Found IP adress")
             for c, v in enumerate(check_ip_address['ip_addresses']):
@@ -85,6 +86,7 @@ def predict():
                     city_exists = False
                 else:
                     city_exists = True
+        # city_exists = False  # for testing
         # check_if_city_exists = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
         no_ip = True
         if city_exists:

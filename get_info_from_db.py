@@ -29,7 +29,7 @@ if __name__ == "__main__":
     date_format = "%m/%d/%Y"
     new_date = datetime.strftime(datetime.now(), date_format)
     # new_date = datetime.strftime(datetime.now()-timedelta(days=1), date_format)
-    # db.locations.delete_one({"date": new_date, "cities": ["Kharkiv,Ukraine"]})
+    # db.locations.delete_one({"date": new_date})
     all_dates = list(db.locations.find({}, {'date': 1, '_id': 0}))
     all_dates = [i['date'] for i in all_dates]
     get_previous_day = db.locations.find_one({'date': new_date})

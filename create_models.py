@@ -99,11 +99,15 @@ if __name__ == "__main__":
 
     date_format = "%m/%d/%Y"
     new_date = datetime.strftime(datetime.now(), date_format)
-    cities = db.locations.find_one({'date': new_date})['cities']
+    new_date_info = db.locations.find_one({'date': new_date})
+    cities = new_date_info['cities']
+    predicted_temp_info = new_date_info['predicted_temp']
+    cities_with_predictions = predicted_temp_info.keys()
     print(cities)
     print('Make predictions')
-    resulted_dict = {}
-    for city in cities:
+    # resulted_dict = {}
+    cities_without_predictions = [city for city in cities if city not in cities_with_predictions]
+    for city in cities_without_predictions:
         path_for_model_city_weights = directory_for_storing_weights + '/' + city + '.joblib'
         if not os.path.exists(path_for_model_city_weights):
             print(f"Could not found weights for a {city} model, create a new one")
@@ -133,6 +137,10 @@ if __name__ == "__main__":
 
         # y = [db.locations.find_one({"date": i, "cities": city})['temperatures'][find_index] for i in X]
         print(y)
+        # from one example cannot use model so create more examples from this one
+        one_X, one_y = X[0], y[0]
+        X = [one_X for x in range(0, 10)]
+        y = [one_y for y in range(0, 10)]
         X = le.fit_transform(X).reshape(-1, 1)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
         model.fit(X_train, y_train)
@@ -153,8 +161,8 @@ if __name__ == "__main__":
         predicted_temp = {"1_day": dict_1_day,
                           "7_days": dict_7_days,
                           "10_days": dict_10_days}
-        resulted_dict[city] = predicted_temp
+        predicted_temp_info[city] = predicted_temp
         # model.save(path_for_model_city_weights)
         dump(model, path_for_model_city_weights)
-    print(resulted_dict)
-    db.locations.find_one_and_update({"date": new_date}, {"$set": {"predicted_temp": resulted_dict}})
+    print(predicted_temp_info)
+    db.locations.find_one_and_update({"date": new_date}, {"$set": {"predicted_temp": predicted_temp_info}})
