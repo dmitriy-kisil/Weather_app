@@ -196,6 +196,8 @@ if __name__ == "__main__":
             print(1234)
             print(y)
             # y = y[:1] # test when one example
+            # choose a number of time steps
+            n_steps_in, n_steps_out = 10, 10
             if len(y) == 1:
                 # today = datetime.strptime(new_date, date_format)
                 # one_day = today + timedelta(days=1)
@@ -223,7 +225,7 @@ if __name__ == "__main__":
                                   "10_days": dict_10_days}
                 resulted_dict[city] = predicted_temp
                 continue
-            if len(y) <= 10:
+            if len(y) <= (n_steps_in + n_steps_out):
                 model = LinearRegression()
                 X = le.fit_transform(X).reshape(-1, 1)
                 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
@@ -247,8 +249,6 @@ if __name__ == "__main__":
                                   "10_days": dict_10_days}
                 resulted_dict[city] = predicted_temp
                 continue
-            # choose a number of time steps
-            n_steps_in, n_steps_out = 10, 10
             # reshape from [samples, timesteps] into [samples, timesteps, features]
             n_features = 1
 

@@ -30,6 +30,8 @@ if __name__ == "__main__":
     new_date = datetime.strftime(datetime.now(), date_format)
     # new_date = datetime.strftime(datetime.now()-timedelta(days=1), date_format)
     # db.locations.delete_one({"date": new_date})
+    # from bson.objectid import ObjectId
+    # result = db.locations.delete_one({'_id': ObjectId(str)})
     all_dates = list(db.locations.find({}, {'date': 1, '_id': 0}))
     all_dates = [i['date'] for i in all_dates]
     get_previous_day = db.locations.find_one({'date': new_date})
