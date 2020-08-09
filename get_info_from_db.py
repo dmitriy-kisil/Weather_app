@@ -1,31 +1,23 @@
 import pandas as pd
 import os
 from datetime import datetime
-from datetime import timedelta
-from weather_flask import get_db
+from utils import get_db
 import pyowm
+from dotenv import load_dotenv, find_dotenv
 
+load_dotenv()
+
+# Add MongoDB URL:
+mongodb_url = os.environ['MONGODB_URL']
 # Add tokens for API
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
 owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
 
 
-def get_weather(cities):
-    print("Call API to get weather")
-    cities_temperatures = []
-    for city in cities:
-        observation = owm.weather_at_place(city)
-        w = observation.get_weather()
-        temperature_from_weather = w.get_temperature('celsius')['temp']
-        cities_temperatures.append(temperature_from_weather)
-    print(f'New temps are: {cities_temperatures}')
-    return cities_temperatures
-
-
 if __name__ == "__main__":
 
-    db = get_db()
+    db = get_db(mongodb_url)
     date_format = "%m/%d/%Y"
     new_date = datetime.strftime(datetime.now(), date_format)
     # new_date = datetime.strftime(datetime.now()-timedelta(days=1), date_format)
@@ -35,7 +27,7 @@ if __name__ == "__main__":
     all_dates = list(db.locations.find({}, {'date': 1, '_id': 0}))
     all_dates = [i['date'] for i in all_dates]
     get_previous_day = db.locations.find_one({'date': new_date})
-    number_of_cities_to_parse = 2
+    number_of_cities_to_parse = len(get_previous_day['cities'])
     prev_cities = get_previous_day['cities'][:number_of_cities_to_parse]
     temperatures = {}
     for i in all_dates:

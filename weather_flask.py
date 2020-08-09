@@ -1,11 +1,12 @@
 # import the necessary packages
+import os
+from datetime import datetime
+from datetime import timedelta
 import flask
 from flask_caching import Cache
 import ipinfo
 import pyowm
-from datetime import datetime
-from datetime import timedelta
-import os
+from utils import get_db
 from pymongo import MongoClient, ReturnDocument
 from dotenv import load_dotenv, find_dotenv
 
@@ -26,12 +27,6 @@ handler = ipinfo.getHandler(ipinfo_token)
 owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
 
 
-def get_db():
-    client = MongoClient(mongodb_url)
-    db = client.WeatherApp
-    return db
-
-
 @app.route("/predict/", methods=["POST"])
 @cache.cached(timeout=50)
 def predict():
@@ -46,9 +41,7 @@ def predict():
             ip_address = flask.request.remote_addr
         # If testing from localhost or inside docker-compose, change IP address to a more suitable one
         if ip_address == "127.0.0.1" or ip_address == "172.17.0.1":
-            # ip_address = "192.162.78.101"  # Ukraine
-            ip_address = "178.150.147.148"  # another Ukraine address
-            # ip_address = "198.16.78.43"  # Netherlands
+            ip_address = "192.162.78.101"  # Ukraine
         date_format = "%m/%d/%Y"
         new_date = datetime.strftime(datetime.now(), date_format)
         print(new_date)
@@ -57,7 +50,6 @@ def predict():
         check_date = db.locations.find_one({"date": new_date})
         check_ip_address = check_date
         new_query = None
-        # db.locations.delete_one({"date": new_date})
 
         ip_address_exists_in_db = False
         if check_ip_address:
@@ -87,7 +79,6 @@ def predict():
                 else:
                     city_exists = True
         # city_exists = False  # for testing
-        # check_if_city_exists = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
         no_ip = True
         if city_exists:
             if check_if_city_exists.get('ip_addresses'):
@@ -112,62 +103,37 @@ def predict():
                                                    upsert=True,
                                                    return_document=ReturnDocument.AFTER)
             print(one)
-            # db.locations.delete_one({"date": new_date})
         if check_date and city_exists:
             print("Nothing to do")
             today = check_if_city_exists
             find_index = today['cities'].index(city_and_country)
             data['temperature'] = today['temperatures'][find_index]
-            # db.locations.delete_one({"date": new_date})
-        elif check_date:
+            data_temp = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
+            data["predict_temp"] = data_temp['predicted_temp'][city_and_country]
+        if check_date and not city_exists:
             print("Call API to get weather")
             observation = owm.weather_at_place(city_and_country)
             w = observation.get_weather()
             data['temperature'] = w.get_temperature('celsius')['temp']
-            new_query = db.locations.find_one_and_update({"date": new_date},
-                                                         {"$push": {
-                                                             "cities": city_and_country,
-                                                             "temperatures": data['temperature'],
-                                                             "ip_addresses": [data['ip']]},
-                                                         '$inc': {'number_of_cities': 1}},
-                                                         upsert=True,
-                                                         return_document=ReturnDocument.AFTER)
+            db.locations.find_one_and_update({"date": new_date},
+                                             {"$push": {
+                                                 "cities": city_and_country,
+                                                 "temperatures": data['temperature'],
+                                                 "ip_addresses": [data['ip']]},
+                                                 '$inc': {'number_of_cities': 1}},
+                                             upsert=True,
+                                             return_document=ReturnDocument.AFTER)
             print('Added new city!')
             print(db.locations.find_one()['_id'])
             data['id'] = str(db.locations.find_one()['_id'])
-        else:
-            print("Call API to get weather")
-            observation = owm.weather_at_place(city_and_country)
-            w = observation.get_weather()
-            data['temperature'] = w.get_temperature('celsius')['temp']
-            print("Create new date")
-            # db.locations.delete_one({"city": "Kharkiv"})
-            new_query = db.locations.insert_one({"date": new_date, "cities": [city_and_country], "ip_addresses": [[ip_address]],
-                                     "temperatures": [data['temperature']], 'number_of_cities': 1})
-            # db.locations.delete_one({"date": new_date})
-
-        # if new_query.get('predicted_temp'):
-        #     if new_query['predicted_temp'].get(city_and_country):
-        #         data_temp = new_query['predicted_temp'][city_and_country]
-        #         print("Add predicted weather temperatures to response")
-        # else:
-        #     print("Don't found predicted temperatures, create a new one")
-        #     from subprocess import call
-        #     call(["python3", "create_models.py"])
-        if new_query:
             print("Don't found predicted temperatures, create a new one")
             from subprocess import call
             call(["python3", "create_models.py"])
             data_temp = db.locations.find_one({"date": new_date, "cities": {"$regex": city_and_country}})
-        else:
-            print("Add predicted weather temperatures to response")
-            data_temp = check_if_city_exists
-        if not data_temp['predicted_temp'].get(city_and_country):
-            data_temp['predicted_temp'][city_and_country] = 'Come tomorrow to get predictions'
+            data["predict_temp"] = data_temp['predicted_temp'][city_and_country]
         data.pop("id", None)
-        data["predict_temp"] = data_temp['predicted_temp'][city_and_country]
         data["today"] = new_date
-        # db.locations.delete_one({"date": new_date})
+        # db.locations.delete_one({"date": new_date})  # for testing
         # indicate that the request was a success
         data["success"] = True
     response = flask.jsonify(data)
@@ -178,5 +144,5 @@ def predict():
 
 if __name__ == "__main__":
     print("please wait until server has fully started")
-    db = get_db()
+    db = get_db(mongodb_url)
     app.run(host='0.0.0.0', port=port)

@@ -1,6 +1,5 @@
 from apscheduler.schedulers.blocking import BlockingScheduler
 import subprocess
-import signal
 import os
 
 cmd = "python3 weather_flask.py"
@@ -16,8 +15,9 @@ sched = BlockingScheduler(timezone="Europe/Kiev")
 # def timed_job():
 #     """Schedule a job."""
 #     print('This job is run every 1 minute.')
-#     cmd = "python3 create_new_day.py"
+#     cmd = "python3 create_new_day2.py"
 #     subprocess.call(cmd, shell=True)
+
 
 @sched.scheduled_job('cron', day_of_week='mon-sun', hour=7, minute=30)
 def scheduled_job():
@@ -25,5 +25,6 @@ def scheduled_job():
     print('This job is run every one day.')
     cmd = "python3 create_new_day2.py"
     subprocess.call(cmd, shell=True)
+
 
 sched.start()
