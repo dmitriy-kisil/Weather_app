@@ -18,6 +18,7 @@ from datetime import datetime
 from datetime import timedelta
 from weather_flask import get_db
 import pyowm
+from utils import get_weather
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv()
@@ -28,18 +29,6 @@ mongodb_url = os.environ['MONGODB_URL']
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
 owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
-
-
-def get_weather(cities):
-    print("Call API to get weather")
-    cities_temperatures = []
-    for city in cities:
-        observation = owm.weather_at_place(city)
-        w = observation.get_weather()
-        temperature_from_weather = w.get_temperature('celsius')['temp']
-        cities_temperatures.append(temperature_from_weather)
-    print(f'New temps are: {cities_temperatures}')
-    return cities_temperatures
 
 
 # split a univariate sequence into samples
@@ -87,7 +76,7 @@ if __name__ == "__main__":
         prev_cities = get_previous_day['cities']
         prev_ips = get_previous_day['ip_addresses']
         prev_number_of_cities = get_previous_day['number_of_cities']
-        new_temperatures = get_weather(prev_cities)
+        new_temperatures = get_weather(owm, prev_cities)
         new_temperatures = [int(i) for i in new_temperatures]
         cities = prev_cities
         db.locations.insert_one({"date": new_date, 'cities': prev_cities, 'ip_addresses': prev_ips,

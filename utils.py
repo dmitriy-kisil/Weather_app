@@ -13,10 +13,10 @@ def get_db(url):
 def get_weather(owm, cities):
     print("Call API to get weather")
     cities_temperatures = []
+    mgr = owm.weather_manager()
     for city in cities:
-        observation = owm.weather_at_place(city)
-        w = observation.get_weather()
-        temperature_from_weather = w.get_temperature('celsius')['temp']
+        weather = mgr.weather_at_place(city).weather
+        temperature_from_weather = weather.temperature(unit='celsius')['temp']
         cities_temperatures.append(temperature_from_weather)
     print(f'New temps are: {cities_temperatures}')
     return cities_temperatures

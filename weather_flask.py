@@ -112,9 +112,9 @@ def predict():
             data["predict_temp"] = data_temp['predicted_temp'][city_and_country]
         if check_date and not city_exists:
             print("Call API to get weather")
-            observation = owm.weather_at_place(city_and_country)
-            w = observation.get_weather()
-            data['temperature'] = w.get_temperature('celsius')['temp']
+            mgr = owm.weather_manager()
+            weather = mgr.weather_at_place(city_and_country).weather
+            data['temperature'] = weather.temperature(unit='celsius')['temp']
             db.locations.find_one_and_update({"date": new_date},
                                              {"$push": {
                                                  "cities": city_and_country,
