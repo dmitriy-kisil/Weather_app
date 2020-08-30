@@ -2,14 +2,13 @@ name: Heroku Awake
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: "*/30 * * * *"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: fjogeleit/http-request-action@master
+      - uses: mikeesto/heroku-awake@1.0.0
         with:
-          url: 'https://prediction-weather-app.herokuapp.com/predict/'
-          method: 'POST'
+          URL: "https://prediction-weather-app.herokuapp.com/" # ADD YOUR HEROKU URL HERE e.g. https://cats.herokuapp.com
