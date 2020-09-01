@@ -23,9 +23,10 @@ if __name__ == "__main__":
     all_dates = list(db.locations.find({}, {'date': 1, '_id': 0}))
     all_dates = [i['date'] for i in all_dates]
     # print(all_dates)
-    for r in all_dates[-15:]:
+    for r in all_dates[-2:]:
         day = db.locations.find_one({'date': r})
         cities, temps, ips = day['cities'], day['temperatures'], day['ip_addresses']
+        offsets = day['offsets']
         number_of_records = len(cities)
         print(number_of_records)
         print(temps)
@@ -53,6 +54,7 @@ if __name__ == "__main__":
                 print(f'Remove {current_temps_for_city} and {current_ips_for_city} by {selected_city}')
                 del temps[i-count]
                 del ips[i-count]
+                del offsets[selected_city]
                 count += 1
         print(only_unique_cities)
         print(temps)
@@ -64,6 +66,7 @@ if __name__ == "__main__":
                                              {"$set": {"cities": only_unique_cities,
                                                        "temperatures": temps,
                                                        "ip_addresses": ips,
+                                                       "offsets": offsets,
                                                        "number_of_cities": len(only_unique_cities)
                                                        }})
             print(f'Date {r} has been updated')

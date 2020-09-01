@@ -1,25 +1,51 @@
 import pytz
 import os
-from datetime import datetime
-from utils import get_db
-import pyowm
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from geopy.geocoders import Nominatim
 from timezonefinder import TimezoneFinder
+import pyowm
+from utils import get_db, tz_diff
 from dotenv import load_dotenv
+from create_new_day3 import predict_for_one_city
 
 load_dotenv()
 
 
-def func(geolocator, tf, cityname):
-    # Get lat, long from city name
-    location = geolocator.geocode(cityname)
-    # Get timezone from coordinates
-    latitude, longitude = location.latitude, location.longitude
-    # Timezone
-    datez = tf.timezone_at(lng=longitude, lat=latitude)
-    datez = str(datez)
-    globalDate = datetime.now(pytz.timezone(datez))
-    print("The date in " + str(cityname) + " is: " + globalDate.strftime('%A, %m/%d/%y %H:%M:%S %Z %z'))
+def update_temps(db, local_date, current_temperature, index):
+     date_format = "%m/%d/%Y"
+     local_date = datetime.strftime(local_date, date_format)
+     local_info = db.locations.find_one({'date': local_date})
+     local_temps = local_info['temperatures']
+     local_temps[index] = current_temperature
+     db.locations.find_one_and_update({"date": local_date}, {'$set': {'temperatures': local_temps}})
+
+
+def get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds):
+    new_date_hour = int(datetime.now(pytz.timezone('utc')).strftime('%H'))
+    new_date_day = int(datetime.now(pytz.timezone('utc')).strftime('%d'))
+    next_day_info, previous_day_info = {}, {}
+    for index, city_offset in enumerate(prev_offsets):
+        local_hour = new_date_hour - city_offset
+        local_date = datetime.now(pytz.timezone('utc')) - timedelta(hours=city_offset)
+        previous_date = datetime.now(pytz.timezone('utc')) - timedelta(days=1)
+        local_day = int(local_date.strftime('%d'))
+        city_name, current_temperature = prev_cities[index], new_temperatures[index]
+
+        if local_day > new_date_day:
+            local_hour = local_hour - 24
+            local_hour_str = str(local_hour) + '_hour'
+            next_day_info[city_name] = {local_hour_str: current_temperature}
+        else:
+            local_hour_str = str(local_hour) + '_hour'
+            previous_day_info[city_name] = {local_hour_str: current_temperature}
+            if local_hour_str == '12_hour':
+                print(f'Run prediction for {city_name}')
+                update_temps(db, local_date, current_temperature, index)
+                predict_for_one_city(db, local_date, prev_preds, city_name)
+
+    return next_day_info, previous_day_info
+
 
 # Add MongoDB URL:
 mongodb_url = os.environ['MONGODB_URL']
@@ -38,8 +64,14 @@ if __name__ == "__main__":
     db = get_db(mongodb_url)
     date_format = "%m/%d/%Y"
     new_date = datetime.strftime(datetime.now(), date_format)
+    new_date_hour = int(datetime.now(pytz.timezone('utc')).strftime('%H'))
+    print(new_date_hour)
     day = db.locations.find_one({'date': new_date})
     cities = day['cities']
-    for city in cities:
-        city = city.split(',')[0]
-        func(geolocator, tf, city)
+    offsets = []
+    for city in cities[:]:
+        city_offset = tz_diff(geolocator, tf, city)
+        offsets.append(city_offset)
+    print(offsets)
+    local_hours = get_local_hours(new_date_hour, offsets)
+    print(local_hours)
