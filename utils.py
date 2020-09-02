@@ -274,9 +274,9 @@ def predict_for_one_city(db, local_date, resulted_dict, city):
             x_input = np.array(raw_seq[-n_steps_in:])
             x_input = x_input.reshape((1, n_steps_in, n_features))
             yhat = model.predict(x_input, verbose=0)
-            predicted_temp = make_predictions_rnn(new_date, date_format, model, raw_seq, n_steps_in)
-            today = datetime.strptime(new_date, date_format)
-            resulted_dict[city] = predicted_temp
+        predicted_temp = make_predictions_rnn(new_date, date_format, model, raw_seq, n_steps_in)
+        today = datetime.strptime(new_date, date_format)
+        resulted_dict[city] = predicted_temp
     print(resulted_dict[city])
     db.locations.find_one_and_update({"date": new_date}, {'$set': {'predicted_temp': resulted_dict}})
 

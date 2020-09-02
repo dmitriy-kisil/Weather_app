@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from geopy.geocoders import Nominatim
 from timezonefinder import TimezoneFinder
 import pyowm
-from utils import get_db, tz_diff
+from utils import get_db, tz_diff, if_future_day_exists
 from dotenv import load_dotenv
 from create_new_day3 import predict_for_one_city
 
@@ -28,18 +28,17 @@ def get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds)
     for index, city_offset in enumerate(prev_offsets):
         local_hour = new_date_hour - city_offset
         local_date = datetime.now(pytz.timezone('utc')) - timedelta(hours=city_offset)
-        previous_date = datetime.now(pytz.timezone('utc')) - timedelta(days=1)
-        local_day = int(local_date.strftime('%d'))
         city_name, current_temperature = prev_cities[index], new_temperatures[index]
-
-        if local_day > new_date_day:
+        next_day_exists = if_future_day_exists(city_offset)
+        print(next_day_exists, city_name, local_hour)
+        if next_day_exists:
             local_hour = local_hour - 24
             local_hour_str = str(local_hour) + '_hour'
             next_day_info[city_name] = {local_hour_str: current_temperature}
         else:
             local_hour_str = str(local_hour) + '_hour'
             previous_day_info[city_name] = {local_hour_str: current_temperature}
-            if local_hour_str == '12_hour':
+            if local_hour_str == '12_hour' or not prev_preds.get(city_name):
                 print(f'Run prediction for {city_name}')
                 update_temps(db, local_date, current_temperature, index)
                 predict_for_one_city(db, local_date, prev_preds, city_name)
