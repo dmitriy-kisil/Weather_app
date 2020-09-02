@@ -29,10 +29,7 @@ def get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds)
         local_hour = new_date_hour - city_offset
         local_date = datetime.now(pytz.timezone('utc')) - timedelta(hours=city_offset)
         city_name, current_temperature = prev_cities[index], new_temperatures[index]
-        next_day_exists = if_future_day_exists(city_offset)
-        print(next_day_exists, city_name, local_hour)
-        if next_day_exists:
-            local_hour = local_hour - 24
+        if local_hour < 11 - city_offset:
             local_hour_str = str(local_hour) + '_hour'
             next_day_info[city_name] = {local_hour_str: current_temperature}
         else:
