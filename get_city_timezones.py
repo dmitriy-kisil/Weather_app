@@ -35,11 +35,14 @@ def get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds)
         else:
             local_hour_str = str(local_hour) + '_hour'
             previous_day_info[city_name] = {local_hour_str: current_temperature}
-            if local_hour_str == '12_hour' or not prev_preds.get(city_name):
+            if local_hour_str == '12_hour':
                 print(f'Run prediction for {city_name}')
                 update_temps(db, local_date, current_temperature, index)
                 predict_for_one_city(db, local_date, prev_preds, city_name)
-
+        if not prev_preds.get(city_name):
+            print(f'Run prediction for {city_name}')
+            update_temps(db, local_date, current_temperature, index)
+            predict_for_one_city(db, local_date, prev_preds, city_name)
     return next_day_info, previous_day_info
 
 
