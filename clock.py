@@ -27,10 +27,10 @@ def hourly_job():
     subprocess.call(cmd, shell=True)
 
 
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=12, minute=00)
+@sched.scheduled_job('interval', hours=1)
 def scheduled_job():
     """Schedule a job."""
-    print('This job is run every one day.')
+    print('This job is run every 1 hour.')
     cmd = "python3 create_new_day3.py"
     subprocess.call(cmd, shell=True)
 
