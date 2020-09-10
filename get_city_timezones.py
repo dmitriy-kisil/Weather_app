@@ -22,14 +22,14 @@ def update_temps(db, local_date, current_temperature, index):
 
 
 def get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds):
-    new_date_hour = int(datetime.now(pytz.timezone('utc')).strftime('%H'))
-    new_date_day = int(datetime.now(pytz.timezone('utc')).strftime('%d'))
+    utc_date_day = int(datetime.now(pytz.timezone('utc')).strftime('%d'))
     next_day_info, previous_day_info = {}, {}
     for index, city_offset in enumerate(prev_offsets):
-        local_hour = new_date_hour - city_offset
         local_date = datetime.now(pytz.timezone('utc')) - timedelta(hours=city_offset)
+        local_hour = int(local_date.strftime('%H'))
+        local_day = int(local_date.strftime('%d'))
         city_name, current_temperature = prev_cities[index], new_temperatures[index]
-        if local_hour < 11 - city_offset:
+        if local_day > utc_date_day:
             local_hour_str = str(local_hour) + '_hour'
             next_day_info[city_name] = {local_hour_str: current_temperature}
         else:
