@@ -7,7 +7,7 @@ from flask_caching import Cache
 import ipinfo
 import pyowm
 from utils import get_db
-from create_new_day3 import create_a_new_day
+from create_new_day3 import create_a_new_day, predict_for_one_city
 from update_hour_temp import update_temps_hour
 import pytz
 from pymongo import MongoClient, ReturnDocument
@@ -176,8 +176,6 @@ def predict():
             print(db.locations.find_one()['_id'])
             data['id'] = str(db.locations.find_one()['_id'])
             print("Don't found predicted temperatures, create a new one")
-            # from subprocess import call
-            # call(["python3", "create_models.py"])
             get_previous_day = db.locations.find_one({"date": local_date})
             if get_previous_day.get('predicted_temp'):
                 prev_preds = get_previous_day.get('predicted_temp')
