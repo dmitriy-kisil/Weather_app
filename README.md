@@ -21,6 +21,6 @@ From 1 to 10 observation LinearRegression model will be used for predictions in 
 Code for backend part host on Heroku free dyno, so if you got 'connection was closed because 'full header was received' - just close and open app again. Server starting up time around 30sec - 1min from sleep. After 30 min of inactivity, server will go to sleep again
 
 Used in project technologies: Python3, Flask, MongoDB, Docker.
-Code hosted on Heroku and DB on MLab.
+Code hosted previously on Heroku and then moved to Google AppEngine and DB on MLab.
 
 It's backend part. For frontend, please, go [here](https://github.com/Oysiyl/simple-weather-app)
