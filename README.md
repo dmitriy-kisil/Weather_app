@@ -3,7 +3,7 @@ Weather API
 Web project with ML.
 
 How to use:
-send POST request to https://prediction-weather-app.herokuapp.com/predict/.
+send POST request to https://weather-app-288315.uc.r.appspot.com/predict/.
 You will receive JSON with information such as:
 1) your IP, 
 2) city/country(based upon IP), 

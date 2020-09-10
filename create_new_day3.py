@@ -17,9 +17,8 @@ from sklearn.metrics import mean_absolute_error
 from datetime import datetime
 from datetime import timedelta
 import pytz
-from weather_flask import get_db
 import pyowm
-from utils import get_weather
+from utils import get_weather, get_db
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv()
@@ -30,7 +29,9 @@ mongodb_url = os.environ['MONGODB_URL']
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
 owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+db = get_db(mongodb_url)
 
+le = preprocessing.LabelEncoder()
 
 # split a univariate sequence into samples
 def split_sequence(sequence, n_steps_in, n_steps_out):
@@ -49,10 +50,7 @@ def split_sequence(sequence, n_steps_in, n_steps_out):
     return np.array(X), np.array(y)
 
 
-if __name__ == "__main__":
-
-    db = get_db(mongodb_url)
-    le = preprocessing.LabelEncoder()
+def create_a_new_day():
 
     hours = 12
     hours_added = timedelta(hours=hours)
@@ -197,3 +195,7 @@ if __name__ == "__main__":
     #     print('New day created successfully')
     # else:
     #     print('Today is found, nothing to do')
+
+
+if __name__ == "__main__":
+    create_a_new_day()

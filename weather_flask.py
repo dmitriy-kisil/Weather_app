@@ -7,7 +7,8 @@ from flask_caching import Cache
 import ipinfo
 import pyowm
 from utils import get_db
-from create_new_day3 import predict_for_one_city
+from create_new_day3 import create_a_new_day
+from update_hour_temp import update_temps_hour
 import pytz
 from pymongo import MongoClient, ReturnDocument
 from geopy.geocoders import Nominatim
@@ -21,7 +22,6 @@ load_dotenv()
 app = flask.Flask(__name__)
 # Add caching for app
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
-port = os.environ['PORT']
 # Add MongoDB URL:
 mongodb_url = os.environ['MONGODB_URL']
 # Add tokens for API
@@ -30,6 +30,9 @@ openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
 handler = ipinfo.getHandler(ipinfo_token)
 owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+db = get_db(mongodb_url)
+geolocator = Nominatim(user_agent='xxx')
+tf = TimezoneFinder()
 
 
 @app.route("/predict/", methods=["POST"])
@@ -42,6 +45,8 @@ def predict():
     if flask.request.method == "POST":
         if flask.request.headers.getlist("X-Forwarded-For"):
             ip_address = flask.request.headers.getlist("X-Forwarded-For")[0]
+            if "," in ip_address:
+                ip_address = ip_address.split(",")[0]
         else:
             ip_address = flask.request.remote_addr
         # If testing from localhost or inside docker-compose, change IP address to a more suitable one
@@ -192,9 +197,24 @@ def predict():
     return response
 
 
+@app.route("/update_temp_hour/", methods=["GET"])
+def update_temp_hour():
+    if flask.request.headers.get("X-Appengine-Cron"):
+        update_temps_hour()
+        return '200'
+    else:
+        return '403'
+
+
+@app.route("/create_new_day/", methods=["GET"])
+def create_new_day():
+    if flask.request.headers.get("X-Appengine-Cron"):
+        create_a_new_day()
+        return '200'
+    else:
+        return '403'
+
+
 if __name__ == "__main__":
     print("please wait until server has fully started")
-    db = get_db(mongodb_url)
-    geolocator = Nominatim(user_agent='xxx')
-    tf = TimezoneFinder()
-    app.run(host='0.0.0.0', port=port)
+    app.run()
