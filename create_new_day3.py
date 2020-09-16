@@ -18,7 +18,6 @@ from datetime import datetime
 from datetime import timedelta
 import pytz
 import pyowm
-from utils import get_weather, get_db
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv()

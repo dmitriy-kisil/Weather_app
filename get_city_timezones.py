@@ -5,9 +5,8 @@ from dateutil.relativedelta import relativedelta
 from geopy.geocoders import Nominatim
 from timezonefinder import TimezoneFinder
 import pyowm
-from utils import get_db, tz_diff, if_future_day_exists
+from utils import get_db, tz_diff, if_future_day_exists, predict_for_one_city
 from dotenv import load_dotenv
-from create_new_day3 import predict_for_one_city
 
 load_dotenv()
 
