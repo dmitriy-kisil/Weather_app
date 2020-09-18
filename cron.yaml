@@ -4,4 +4,4 @@ cron:
     schedule: every 1 hours from 00:05 to 23:05
   - description: create new day
     url: /create_new_day/
-    schedule: every day 12:05
+    schedule: every day 12:03
