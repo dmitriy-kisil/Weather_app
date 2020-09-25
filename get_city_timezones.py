@@ -22,7 +22,7 @@ def update_temps(db, local_date, current_temperature, index):
 
 def get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds):
     utc_date_day = int(datetime.now(pytz.timezone('utc')).strftime('%d'))
-    next_day_info, previous_day_info = {}, {}
+    next_day_info, previous_day_info, dates_info = {}, {}, {}
     for index, city_offset in enumerate(prev_offsets):
         local_date = datetime.now(pytz.timezone('utc')) - timedelta(hours=city_offset)
         local_hour = int(local_date.strftime('%H'))
@@ -42,7 +42,8 @@ def get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds)
             print(f'Run prediction for {city_name}')
             update_temps(db, local_date, current_temperature, index)
             predict_for_one_city(db, local_date, prev_preds, city_name)
-    return next_day_info, previous_day_info
+        dates_info[city_name] = local_date
+    return next_day_info, previous_day_info, dates_info
 
 
 # Add MongoDB URL:

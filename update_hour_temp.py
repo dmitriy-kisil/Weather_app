@@ -67,10 +67,15 @@ def update_temps_hour():
         print(prev_offsets)
         # db.locations.find_one_and_update({"date": new_date}, {'$unset': {'offsets': None}})
 
-    local_next_day, local_previous_day = get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds)
+    local_next_day, local_previous_day, dates_info = get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds)
 
     if not get_previous_day.get('hour_temp'):
         print('Create new hour_temp')
+        for city in local_previous_day.keys():
+            local_date = dates_info[city]
+            index = cities.index(city)
+            current_temperature = list(local_previous_day[city].values())[-1]
+            update_temps(db, local_date, current_temperature, index)
         db.locations.find_one_and_update({"date": new_date}, {'$set': {'hour_temp': local_previous_day}})
     else:
         print('Use existed hour_temp')
@@ -80,13 +85,21 @@ def update_temps_hour():
                 hour_temp[city].update(local_previous_day[city])
             else:
                 hour_temp[city] = local_previous_day[city]
+            local_date = dates_info[city]
+            index = cities.index(city)
+            current_temperature = list(local_previous_day[city].values())[-1]
+            update_temps(db, local_date, current_temperature, index)
         db.locations.find_one_and_update({"date": new_date}, {'$set': {'hour_temp': hour_temp}})
         # db.locations.find_one_and_update({"date": new_date}, {'$unset': {'hour_temp': None}})
     # db.locations.find_one_and_update({"date": future_day}, {'$unset': {'hour_temp': None}})
     if local_next_day:
         if not get_next_day.get('hour_temp'):
             print('Create new hour_temp')
-            print(local_next_day)
+            for city in local_next_day.keys():
+                local_date = dates_info[city]
+                index = cities.index(city)
+                current_temperature = list(local_next_day[city].values())[-1]
+                update_temps(db, local_date, current_temperature, index)
             db.locations.find_one_and_update({"date": future_day}, {'$set': {'hour_temp': local_next_day}})
         else:
             print('Use existed hour_temp')
@@ -97,6 +110,11 @@ def update_temps_hour():
                     hour_temp[city].update(local_next_day[city])
                 else:
                     hour_temp[city] = local_next_day[city]
+                current_temperature = list(local_next_day[city].values())[-1]
+                local_date = dates_info[city]
+                index = cities.index(city)
+                update_temps(db, local_date, current_temperature, index)
+                # print(f'for city {city} with new temp {current_temperature} and index {index}')
             db.locations.find_one_and_update({"date": future_day}, {'$set': {'hour_temp': hour_temp}})
             # db.locations.find_one_and_update({"date": new_date}, {'$unset': {'hour_temp': None}})
 
