@@ -291,3 +291,9 @@ def if_future_day_exists(offset):
     else:
         return False
 
+
+def dummy_hour_temp(temp):
+    d1 = {}
+    for i in range(24):
+        d1[str(i) + "_hour"] = temp
+    return d1

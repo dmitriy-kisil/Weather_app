@@ -18,6 +18,8 @@ from datetime import datetime
 from datetime import timedelta
 import pytz
 import pyowm
+from get_hour_temp_from_db_for_all_cities import get_polynomial_predictions, get_linear_regression_predictions
+from get_hour_temp_from_db_for_all_cities import create_example, save_hour_temp_from_db_to_csv
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv()
@@ -67,6 +69,7 @@ def create_a_new_day():
     #         db.locations.delete_one({"date": new_date})
     #         print('Today removed successfully')
     #         find_today = None
+    # find_today = None  # for testing purpose
     if not find_today:
         print('Today is not found, create a new one')
         all_dates = list(db.locations.find({}, {'date': 1, '_id': 0}))
@@ -82,9 +85,24 @@ def create_a_new_day():
         new_temperatures = get_weather(owm, prev_cities)
         new_temperatures = [int(i) for i in new_temperatures]
         cities = prev_cities
+        filename = 'city_data2.csv'
+        # new_date = datetime.strftime(datetime.now(), date_format)
+        df = save_hour_temp_from_db_to_csv(db, filename)
+        # df = pd.read_csv(filename)
+        cities = df['city'].unique()
+        map_to_int = dict(zip(list(cities), list(range(len(cities)))))
+        print(map_to_int)
+        date_to_predict = new_date
+        df['city'] = df['city'].map(map_to_int)
+        resulted_dict = {}
+        # cities = [cities[1]]
+        for city in cities:
+            # resulted_dict = get_linear_regression_predictions(resulted_dict, city, df, map_to_int, date_to_predict)
+            resulted_dict = get_polynomial_predictions(resulted_dict, city, df, map_to_int, 3, date_to_predict)
+        # print(resulted_dict)
         db.locations.insert_one({"date": new_date, 'cities': prev_cities, 'ip_addresses': prev_ips,
                                  'temperatures': new_temperatures, 'number_of_cities': prev_number_of_cities,
-                                 'offsets': prev_offsets})
+                                 'offsets': prev_offsets, 'hour_temp': resulted_dict})
     #     print(cities)
     #     print('Make predictions')
     #     resulted_dict = {}

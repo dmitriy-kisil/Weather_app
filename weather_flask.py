@@ -13,7 +13,7 @@ import pytz
 from pymongo import MongoClient, ReturnDocument
 from geopy.geocoders import Nominatim
 from timezonefinder import TimezoneFinder
-from utils import tz_diff, if_future_day_exists
+from utils import tz_diff, if_future_day_exists, dummy_hour_temp
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv()
@@ -139,15 +139,17 @@ def predict():
             data['temperature'] = today['temperatures'][find_index]
             data_temp = db.locations.find_one({"date": local_date, "cities": {"$regex": city_and_country}})
             data["predict_temp"] = data_temp['predicted_temp'][city_and_country]
+            data['hour_temp'] = data_temp['hour_temp'][city_and_country]
         if check_date and not city_exists:
             print("Call API to get weather")
             mgr = owm.weather_manager()
             weather = mgr.weather_at_place(city_and_country).weather
             data['temperature'] = weather.temperature(unit='celsius')['temp']
+            hour_temp_for_first_day = dummy_hour_temp(int(data['temperature']))
             db.locations.find_one_and_update({"date": local_date},
                                              {"$set": {"offsets." + city_and_country: offset,
                                                        "hour_temp." + city_and_country:
-                                                           {local_hour_str: data['temperature']}}})
+                                                           hour_temp_for_first_day}})
             db.locations.find_one_and_update({"date": local_date},
                                              {"$push": {
                                                  "cities": city_and_country,
@@ -160,10 +162,11 @@ def predict():
                 print('Update next day')
                 future_date = datetime.now(pytz.timezone('utc')) + timedelta(hours=12)
                 future_date = datetime.strftime(future_date, date_format)
+                hour_temp_for_first_day = dummy_hour_temp(int(data['temperature']))
                 db.locations.find_one_and_update({"date": future_date},
                                                  {"$set": {"offsets." + city_and_country: offset,
                                                            "hour_temp." + city_and_country:
-                                                               {local_hour_str: data['temperature']}}})
+                                                               hour_temp_for_first_day}})
                 db.locations.find_one_and_update({"date": future_date},
                                                  {"$push": {
                                                      "cities": city_and_country,
@@ -184,6 +187,7 @@ def predict():
             predict_for_one_city(db, local_date_not_str, prev_preds, city_and_country)
             data_temp = db.locations.find_one({"date": local_date, "cities": {"$regex": city_and_country}})
             data["predict_temp"] = data_temp['predicted_temp'][city_and_country]
+            data['hour_temp'] = data_temp['hour_temp'][city_and_country]
         data.pop("id", None)
         data["today"] = local_date
         # db.locations.delete_one({"date": new_date})  # for testing
