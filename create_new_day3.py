@@ -89,6 +89,9 @@ def create_a_new_day():
         # new_date = datetime.strftime(datetime.now(), date_format)
         df = save_hour_temp_from_db_to_csv(db, filename)
         # df = pd.read_csv(filename)
+        # it is not known why large numbers appear in predictions.
+        # Added a temporary stub to prevent model from using these values
+        df = df[(df['temp'] >= -20) & (df['temp'] <= 40)]
         cities = df['city'].unique()
         map_to_int = dict(zip(list(cities), list(range(len(cities)))))
         print(map_to_int)
