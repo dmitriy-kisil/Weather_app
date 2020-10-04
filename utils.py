@@ -16,6 +16,7 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import RepeatVector
 from tensorflow.keras.layers import TimeDistributed
 from sklearn.metrics import mean_absolute_error
+from sklearn.preprocessing import PolynomialFeatures
 
 
 def get_db(url):
@@ -108,11 +109,63 @@ def predict_ten_days2(selected_date, date_format, model, raw_seq, n_steps_in):
     return date_data, predicted_data
 
 
+def predict_one_day_polynomial(selected_date, date_format, degree, model):
+    one_day = selected_date + timedelta(days=1)
+    prep_one_day = datetime.strftime(one_day, date_format)
+    poly_features = PolynomialFeatures(degree=degree)
+    X_one_day = np.zeros((1, 1))
+    X_one_day = poly_features.fit_transform(X_one_day)
+    y_pred = model.predict(X_one_day)
+    y_pred = [int(i) for i in list(y_pred)]
+    date_data, predicted_data = [prep_one_day], y_pred
+    print('predicted response:', y_pred, sep='\n')
+    return date_data, predicted_data
+
+
+def predict_seven_days_polynomial(selected_date, date_format, degree, model, le):
+    seven_days = [selected_date + timedelta(days=x) for x in range(1, 8)]
+    prep_seven_days = [datetime.strftime(i, date_format) for i in seven_days]
+    poly_features = PolynomialFeatures(degree=degree)
+    X_seven_days = le.fit_transform(prep_seven_days).reshape(-1, 1)
+    X_seven_days = poly_features.fit_transform(X_seven_days)
+    y_pred = model.predict(X_seven_days)
+    y_pred = [int(i) for i in list(y_pred)]
+    date_data, predicted_data = prep_seven_days, y_pred
+    print('predicted response:', y_pred, sep='\n')
+    return date_data, predicted_data
+
+
+def predict_ten_days_polynomial(selected_date, date_format, degree, model, le):
+    ten_days = [selected_date + timedelta(days=x) for x in range(1, 11)]
+    prep_ten_days = [datetime.strftime(i, date_format) for i in ten_days]
+    poly_features = PolynomialFeatures(degree=degree)
+    X_ten_days = le.fit_transform(prep_ten_days).reshape(-1, 1)
+    X_ten_days = poly_features.fit_transform(X_ten_days)
+    y_pred = model.predict(X_ten_days)
+    y_pred = [int(i) for i in list(y_pred)]
+    date_data, predicted_data = prep_ten_days, y_pred
+    print('predicted response:', y_pred, sep='\n')
+    return date_data, predicted_data
+
 def make_predictions_linear_regression(selected_date, date_format, model, le):
     today = datetime.strptime(selected_date, date_format)
     future_one_day, future_one_day_data = predict_one_day(today, date_format, model)
     future_seven_days, future_seven_days_data = predict_seven_days(today, date_format, model, le)
     future_ten_days, future_ten_days_data = predict_ten_days(today, date_format, model, le)
+    dict_1_day = dict(zip(future_one_day, future_one_day_data))
+    dict_7_days = dict(zip(future_seven_days, future_seven_days_data))
+    dict_10_days = dict(zip(future_ten_days, future_ten_days_data))
+    predicted_temp = {"1_day": dict_1_day,
+                      "7_days": dict_7_days,
+                      "10_days": dict_10_days}
+    return predicted_temp
+
+
+def make_predictions_polynomial_regression(selected_date, date_format, degree, model, le):
+    today = datetime.strptime(selected_date, date_format)
+    future_one_day, future_one_day_data = predict_one_day_polynomial(today, date_format, degree, model)
+    future_seven_days, future_seven_days_data = predict_seven_days_polynomial(today, date_format, degree, model, le)
+    future_ten_days, future_ten_days_data = predict_ten_days_polynomial(today, date_format, degree, model, le)
     dict_1_day = dict(zip(future_one_day, future_one_day_data))
     dict_7_days = dict(zip(future_seven_days, future_seven_days_data))
     dict_10_days = dict(zip(future_ten_days, future_ten_days_data))
