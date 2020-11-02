@@ -303,7 +303,7 @@ def predict_for_one_city(db, local_date, resulted_dict, city):
             print(type(X), print(X))
             X = X.reshape((X.shape[0], X.shape[1], n_features))
             # fit model
-            model.fit(X, y, epochs=50, verbose=0)
+            model.fit(X, y, epochs=5, verbose=0)
             # demonstrate prediction
             x_input = np.array(raw_seq[-n_steps_in:])
             x_input = x_input.reshape((1, n_steps_in, n_features))
@@ -322,7 +322,7 @@ def predict_for_one_city(db, local_date, resulted_dict, city):
             print(type(X), print(X))
             X = X.reshape((X.shape[0], X.shape[1], n_features))
             # fit model
-            model.fit(X, y, epochs=50, verbose=0)
+            model.fit(X, y, epochs=5, verbose=0)
             # demonstrate prediction
             x_input = np.array(raw_seq[-n_steps_in:])
             x_input = x_input.reshape((1, n_steps_in, n_features))
