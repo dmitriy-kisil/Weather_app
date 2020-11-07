@@ -11,6 +11,7 @@ from create_new_day3 import create_a_new_day, predict_for_one_city
 from update_hour_temp import update_temps_hour
 import pytz
 from pymongo import MongoClient, ReturnDocument
+import geopy
 from geopy.geocoders import Nominatim
 from timezonefinder import TimezoneFinder
 from utils import tz_diff, if_future_day_exists, dummy_hour_temp
@@ -80,14 +81,23 @@ def predict():
             data['country'] = details.country_name
             data['city'] = details.city
         city_and_country = data['city'] + ',' + data['country']
-        offset = tz_diff(geolocator, tf, city_and_country)
+        if not ip_address_exists_in_db:
+            print("Don't found offset")
+            try:
+                offset = tz_diff(geolocator, tf, city_and_country)
+            except geopy.exc.Unavailable:
+                print("nominatim.openstreetmap.org feels bad today, so set offset to 0")
+                offset = 0
+        else:
+            print("Found offset")
+            offset = check_ip_address['offsets'][city_and_country]
         future_day_exists = if_future_day_exists(offset)
         local_date_not_str = datetime.now(pytz.timezone('utc')) - timedelta(hours=offset)
         date_format = "%m/%d/%Y"
         local_date = datetime.strftime(local_date_not_str, date_format)
         local_hour = int(datetime.strftime(local_date_not_str, "%H"))
         local_hour_str = str(local_hour) + '_hour'
-        print(local_date)
+        # print(local_date)
         check_date = db.locations.find_one({"date": local_date})
         check_if_city_exists = check_date
         city_exists = False
@@ -176,7 +186,7 @@ def predict():
                                                  upsert=True,
                                                  return_document=ReturnDocument.AFTER)
             print('Added new city!')
-            print(db.locations.find_one()['_id'])
+            # print(db.locations.find_one()['_id'])
             data['id'] = str(db.locations.find_one()['_id'])
             print("Don't found predicted temperatures, create a new one")
             get_previous_day = db.locations.find_one({"date": local_date})
