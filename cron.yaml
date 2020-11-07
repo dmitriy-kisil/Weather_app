@@ -1,7 +1,7 @@
 cron:
   - description: update temp by hour
     url: /update_temp_hour/
-    schedule: every 1 hours from 00:05 to 23:05
+    schedule: every 1 hours from 00:15 to 23:15
   - description: create new day
     url: /create_new_day/
     schedule: every day 12:03
