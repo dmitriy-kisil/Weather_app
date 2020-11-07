@@ -15,9 +15,13 @@ def update_temps(db, local_date, current_temperature, index):
      date_format = "%m/%d/%Y"
      local_date = datetime.strftime(local_date, date_format)
      local_info = db.locations.find_one({'date': local_date})
-     local_temps = local_info['temperatures']
-     local_temps[index] = current_temperature
-     db.locations.find_one_and_update({"date": local_date}, {'$set': {'temperatures': local_temps}})
+     if local_info:
+         print("Date is found:" + local_date)
+         local_temps = local_info['temperatures']
+         local_temps[index] = current_temperature
+         db.locations.find_one_and_update({"date": local_date}, {'$set': {'temperatures': local_temps}})
+     else:
+         print("Cannnot found date " + local_date)
 
 
 def get_local_hours(db, prev_offsets, new_temperatures, prev_cities, prev_preds):
