@@ -255,26 +255,23 @@ def split_sequence(sequence, n_steps_in, n_steps_out):
 
 def predict_for_one_city(db, local_date, resulted_dict, city):
     for city in [city]:
-        city_data = db.locations.find({"cities": city})
+        city_data = db.locations.aggregate([{'$project':
+                                                 {'index':
+                                                      {"$indexOfArray": ['$cities', city]
+                                                       }, 'temperatures': 1, 'date': 1
+                                                  }
+                                             }
+                                            ])
         le = preprocessing.LabelEncoder()
         print(city_data)
         date_format = "%m/%d/%Y"
         new_date = datetime.strftime(local_date, date_format)
-        city_data_one = db.locations.find_one({"date": new_date, "cities": {"$regex": city}})
-        find_index = city_data_one['cities'].index(city)
-        print(find_index)
-        X = [i["date"] for i in city_data]
-        print(X)
-        # X = X[:1] # test when one example
-        [print(i) for i in city_data]
-        l1 = [i[0] for i in city_data]
-        print(l1)
-        y = []
-        for c, v in enumerate(X):
-            one_city = db.locations.find_one({"date": v, "cities": city})
-            find_index = one_city['cities'].index(city)
-            y.append(one_city['temperatures'][find_index])
-        # y = [db.locations.find_one({"date": i, "cities": city})['temperatures'][find_index] for i in X]
+        X, y = [], []
+        city_data = list(city_data)
+        for one_date in city_data:
+            find_index = one_date['index']
+            X.append(one_date['date'])
+            y.append(one_date['temperatures'][find_index])
         print(1234)
         print(y)
         # y = y[:1] # test when one example
