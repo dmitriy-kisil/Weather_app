@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from geopy.geocoders import Nominatim
 from timezonefinder import TimezoneFinder
-import pyowm
+from pyowm import OWM
 from utils import get_db, tz_diff, if_future_day_exists, predict_for_one_city
 from dotenv import load_dotenv
 
@@ -55,7 +55,7 @@ mongodb_url = os.environ['MONGODB_URL']
 # Add tokens for API
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
-owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+owm = OWM(openweatherapi_token)  # You MUST provide a valid API key
 
 geolocator = Nominatim(user_agent='xxx')
 tf = TimezoneFinder()

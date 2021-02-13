@@ -5,7 +5,7 @@ from datetime import timedelta
 import flask
 from flask_caching import Cache
 import ipinfo
-import pyowm
+from pyowm import OWM
 from utils import get_db
 from pymongo import MongoClient, ReturnDocument
 from dotenv import load_dotenv, find_dotenv
@@ -24,7 +24,7 @@ ipinfo_token = os.environ['IPINFO_TOKEN']
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
 handler = ipinfo.getHandler(ipinfo_token)
-owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+owm = OWM(openweatherapi_token)  # You MUST provide a valid API key
 
 
 @app.route("/predict/", methods=["POST"])

@@ -11,7 +11,7 @@ from utils import *
 from datetime import datetime
 from datetime import timedelta
 from weather_flask import get_db
-import pyowm
+from pyowm import OWM
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv()
@@ -21,7 +21,7 @@ mongodb_url = os.environ['MONGODB_URL']
 # Add tokens for API
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
-owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+owm = OWM(openweatherapi_token)  # You MUST provide a valid API key
 
 
 if __name__ == "__main__":

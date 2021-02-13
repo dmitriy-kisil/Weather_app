@@ -5,7 +5,7 @@ from datetime import timedelta
 import flask
 from flask_caching import Cache
 import ipinfo
-import pyowm
+from pyowm import OWM
 from utils import get_db
 from create_new_day3 import create_a_new_day, predict_for_one_city
 from update_hour_temp import update_temps_hour
@@ -30,7 +30,7 @@ ipinfo_token = os.environ['IPINFO_TOKEN']
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
 handler = ipinfo.getHandler(ipinfo_token)
-owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+owm = OWM(openweatherapi_token)  # You MUST provide a valid API key
 db = get_db(mongodb_url)
 geolocator = Nominatim(user_agent='xxx')
 tf = TimezoneFinder()

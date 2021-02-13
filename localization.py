@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from utils import get_db
-import pyowm
+from pyowm import OWM
 from pyowm.utils.config import get_default_config
 import pycountry
 import gettext
@@ -16,10 +16,10 @@ mongodb_url = os.environ['MONGODB_URL']
 # Add tokens for API
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
-# owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+# owm = OWM(openweatherapi_token)  # You MUST provide a valid API key
 config_dict = get_default_config()
 config_dict['language'] = 'en'  # your language here
-owm = pyowm.OWM(openweatherapi_token, config_dict)
+owm = OWM(openweatherapi_token, config_dict)
 
 def translate_locale(country_name):
     country = pycountry.countries.get(name=country_name)

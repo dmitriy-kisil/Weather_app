@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from datetime import datetime
 from utils import get_db
-import pyowm
+from pyowm import OWM
 from dotenv import load_dotenv, find_dotenv
 from utils import *
 from sklearn.preprocessing import PolynomialFeatures
@@ -15,11 +15,12 @@ mongodb_url = os.environ['MONGODB_URL']
 # Add tokens for API
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
-owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+owm = OWM(openweatherapi_token)  # You MUST provide a valid API key
 
 
 if __name__ == "__main__":
-
+    import time
+    start = time.time()
     db = get_db(mongodb_url)
     date_format = "%m/%d/%Y"
     new_date = datetime.strftime(datetime.now(), date_format)
@@ -27,6 +28,7 @@ if __name__ == "__main__":
     number_of_cities_to_parse = len(get_previous_day['cities'])
     prev_cities = get_previous_day['cities'][:number_of_cities_to_parse]
     city = prev_cities[1]
+    print(city)
     local_date = datetime.now()
     resulted_dict = {}
     for city in [city]:
@@ -62,22 +64,41 @@ if __name__ == "__main__":
         # y = y[:1] # test when one example
         # choose a number of time steps
         n_steps_in, n_steps_out = 10, 10
-        len_y = len(y)
+        len_y = 1
         if len_y == 1:
+            print('use linear regression one day')
             model = LinearRegression()
             one_X, one_y = X[0], y[0]
             X = [one_X for x in range(0, 10)]
             y = [one_y for y in range(0, 10)]
-            X = le.fit_transform(X).reshape(-1, 1)
+            # X = le.fit_transform(X).reshape(-1, 1)
+            df = pd.DataFrame({"date": X, "temp": y})
+            # X = le.fit_transform(X).reshape(-1, 1)
+            df['month'] = df['date'].apply(lambda x: int(x.split("/")[0]))
+            df['day'] = df['date'].apply(lambda x: int(x.split("/")[1]))
+            df['year'] = df['date'].apply(lambda x: int(x.split("/")[2]))
+            df['temp'] = df['temp'].astype(int)
+
+            X = df[['day', 'month', 'year']]
+            y = df['temp'].astype(int)
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
             model.fit(X_train, y_train)
             predicted_temp = make_predictions_linear_regression(new_date, date_format, model, le)
             resulted_dict[city] = predicted_temp
             break
         if len_y <= n_steps_in:
+            print('use polynomial regression')
             degree = 3
             model = LinearRegression()
-            X = le.fit_transform(X).reshape(-1, 1)
+            df = pd.DataFrame({"date": X, "temp": y})
+            # X = le.fit_transform(X).reshape(-1, 1)
+            df['month'] = df['date'].apply(lambda x: int(x.split("/")[0]))
+            df['day'] = df['date'].apply(lambda x: int(x.split("/")[1]))
+            df['year'] = df['date'].apply(lambda x: int(x.split("/")[2]))
+            df['temp'] = df['temp'].astype(int)
+
+            X = df[['day', 'month', 'year']]
+            y = df['temp'].astype(int)
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
             poly_features = PolynomialFeatures(degree=degree)
             # transforms the existing features to higher degree features.
@@ -96,7 +117,9 @@ if __name__ == "__main__":
             # y_test, y_pred = np.array(y_test).reshape(-1, 1), np.array(y_pred).reshape(-1, 1)
             # r_sq = model.score(y_test, y_pred)
             # print('coefficient of determination:', r_sq)
-            y_test = le.fit_transform(['09/26/2020']).reshape(-1, 1)
+            example = pd.DataFrame({"day": [30], "month": [10], "year": [2020]})
+            # y_test = le.fit_transform(['10/30/2020']).reshape(-1, 1)
+            y_test = example
             y_pred = model.predict(poly_features.fit_transform(y_test))
             y_pred = [float(i) for i in list(y_pred)]
             print(len(y_test), len(y_pred))
@@ -108,25 +131,45 @@ if __name__ == "__main__":
             resulted_dict[city] = predicted_temp
             break
         if len_y <= (n_steps_in + n_steps_out):
+            print('use linear regression')
             model = LinearRegression()
-            X = le.fit_transform(X).reshape(-1, 1)
+            print(X)
+            # df = pd.DataFrame({"date": X, "temp": y})
+            # df.to_csv("kharkiv_data.csv")
+            df = pd.DataFrame({"date": X, "temp": y})
+            # X = le.fit_transform(X).reshape(-1, 1)
+            df['month'] = df['date'].apply(lambda x: int(x.split("/")[0]))
+            df['day'] = df['date'].apply(lambda x: int(x.split("/")[1]))
+            df['year'] = df['date'].apply(lambda x: int(x.split("/")[2]))
+            df['temp'] = df['temp'].astype(int)
+
+            X = df[['day', 'month', 'year']]
+            y = df['temp'].astype(int)
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
             model.fit(X_train, y_train)
             y_pred = model.predict(X_test)
             y_pred = [float(i) for i in list(y_pred)]
             print(len(y_test), len(y_pred))
             print(y_test, y_pred)
-            y_test, y_pred = np.array(y_test).reshape(-1, 1), np.array(y_pred).reshape(-1, 1)
-            r_sq = model.score(y_test, y_pred)
-            print('coefficient of determination:', r_sq)
-            y_test = le.fit_transform(['09/26/2020']).reshape(-1, 1)
-            y_pred = model.predict(y_test)
-            y_pred = [float(i) for i in list(y_pred)]
+            # y_test, y_pred = np.array(y_test).reshape(-1, 1), np.array(y_pred).reshape(-1, 1)
+            # r_sq = model.score(y_test, y_pred)
+            # print('coefficient of determination:', r_sq)
+            import matplotlib.pyplot as plt
+
+            plt.plot(y_test, X_test, 'bs', y_pred, X_test, 'g^')
+            plt.ylabel('some numbers')
+            plt.show()
+            example = pd.DataFrame({"day": [30], "month": [10], "year": [2020]})
+            example = np.array([[30, 10, 2020]])
+            # y_test = le.fit_transform(['10/30/2020']).reshape(-1, 1)
+            example_m = model.predict(example)
+            example_m = [float(i) for i in list(example_m)]
+            print(example_m)
             print(len(y_test), len(y_pred))
             print(y_test, y_pred)
-            y_test, y_pred = np.array(y_test).reshape(1, -1), np.array(y_pred).reshape(1, -1)
-            r_sq = model.score(y_test, y_pred)
-            print('coefficient of determination:', r_sq)
+            # y_test, y_pred = np.array(y_test).reshape(1, -1), np.array(y_pred).reshape(1, -1)
+            # r_sq = model.score(y_test, y_pred)
+            # print('coefficient of determination:', r_sq)
             predicted_temp = make_predictions_linear_regression(new_date, date_format, model, le)
             resulted_dict[city] = predicted_temp
             break
@@ -145,6 +188,8 @@ if __name__ == "__main__":
         print(n_steps_in, n_steps_out)
         print(len(y))
         if len_y > (n_steps_in + n_steps_out + n_steps_out):
+            start1 = time.time()
+            print('use rnn')
             raw_seq = y[:-n_steps_out]
             y_true = y[-n_steps_out:]
             print(len(raw_seq))
@@ -154,12 +199,14 @@ if __name__ == "__main__":
             print(type(X), print(X))
             X = X.reshape((X.shape[0], X.shape[1], n_features))
             # fit model
-            model.fit(X, y, epochs=50, verbose=0)
+            model.fit(X, y, epochs=5, verbose=0)
             # demonstrate prediction
             x_input = np.array(raw_seq[-n_steps_in:])
             x_input = x_input.reshape((1, n_steps_in, n_features))
             yhat = model.predict(x_input, verbose=0)
+            print(f"Elapsed inside: {time.time() - start1}")
         else:
+            print('use another rnn')
             raw_seq = y[:]
             print(len(raw_seq))
             # split into samples
@@ -178,4 +225,5 @@ if __name__ == "__main__":
         today = datetime.strptime(new_date, date_format)
         resulted_dict[city] = predicted_temp
     print(resulted_dict[city])
+    print(f"Elapsed: {time.time() - start}")
     # db.locations.find_one_and_update({"date": new_date}, {'$set': {'predicted_temp': resulted_dict}})

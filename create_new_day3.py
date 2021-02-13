@@ -17,7 +17,7 @@ from sklearn.metrics import mean_absolute_error
 from datetime import datetime
 from datetime import timedelta
 import pytz
-import pyowm
+from pyowm import OWM
 from get_hour_temp_from_db_for_all_cities import get_polynomial_predictions, get_linear_regression_predictions
 from get_hour_temp_from_db_for_all_cities import create_example, save_hour_temp_from_db_to_csv
 from dotenv import load_dotenv, find_dotenv
@@ -29,7 +29,7 @@ mongodb_url = os.environ['MONGODB_URL']
 # Add tokens for API
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
-owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+owm = OWM(openweatherapi_token)  # You MUST provide a valid API key
 db = get_db(mongodb_url)
 
 le = preprocessing.LabelEncoder()

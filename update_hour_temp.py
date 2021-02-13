@@ -2,7 +2,7 @@ import os
 from sklearn import preprocessing
 from datetime import datetime
 from datetime import timedelta
-import pyowm
+from pyowm import OWM
 import pytz
 from utils import get_weather
 from geopy.geocoders import Nominatim
@@ -18,7 +18,7 @@ mongodb_url = os.environ['MONGODB_URL']
 # Add tokens for API
 openweatherapi_token = os.environ['OPENWEATHERAPI_TOKEN']
 # Initialize third-party API
-owm = pyowm.OWM(openweatherapi_token)  # You MUST provide a valid API key
+owm = OWM(openweatherapi_token)  # You MUST provide a valid API key
 db = get_db(mongodb_url)
 tf = TimezoneFinder()
 geolocator = Nominatim(user_agent='xxx')
@@ -47,6 +47,8 @@ def update_temps_hour():
     else:
         prev_preds = {}
     new_temperatures = get_weather(owm, prev_cities)
+    # For testing:
+    # new_temperatures = [23.31, 8.94, 11.23, 14.29, 11.59, 20.34, 3.65, 15.34, 8.9, 8.55, 20.72, 14.91, 19.63, 2.0, 7.53, 20.77, 15.78, 11.71, 13.18, 15.04, 11.0, 18.02, 10.72, 18.24, 10.93, 6.16, 13.6, 18.58, 11.34, 19.68, 13.88, 18.09, 14.67, 5.63, 11.4, 2.0, 6.34, 13.48, 10.06, 9.61, 21.26, -4.34, 23.39, 15.74, 14.45, 14.95, 20.52, 9.49, 28.0, 22.59, 16.54, 19.73, 19.39, 25.0, 10.3, 9.66, 9.01, 8.51, 24.0, 9.2, 20.0, 13.69, 8.55, 14.82, 11.86, 15.53, 26.39, 16.11, 10.58, 19.54, 9.28, 8.74, 7.0, 11.12, 15.56, 22.62, 26.0, 11.79, 19.0]
     new_temperatures = [int(i) for i in new_temperatures]
     cities = prev_cities
     print(cities)
