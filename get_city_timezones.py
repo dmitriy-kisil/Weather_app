@@ -15,10 +15,8 @@ def update_temps(db, local_date, current_temperature, index):
     date_format = "%m/%d/%Y"
     local_date = datetime.strftime(local_date, date_format)
     local_info = db.locations.find_one_and_update({'date': local_date},
-                                                  {'$set': {'temperatures.$[element]': current_temperature}},
-                                                  projection={'_id': True},
-                                                  array_filters=[{'element': {'$eq': index}}],
-                                                  upsert=False)
+                                                  {'$set': {f'temperatures.{index}': current_temperature}},
+                                                  projection={'_id': True})
     if local_info:
         print("Date is found:" + local_date)
     else:
