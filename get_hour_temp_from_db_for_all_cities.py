@@ -46,8 +46,8 @@ def save_hour_temp_from_db_to_csv(db, filename):
     index = 0
     # filter out three days from previous year plus future day which can or can't contain hour_temp for all the cities
     selected_dates = [i for i in all_dates if i > '09/10/2020'][3:]
-    # selected_dates = selected_dates[::-1]
-    # selected_dates = selected_dates[:30]
+    selected_dates = selected_dates[::-1]
+    selected_dates = selected_dates[:30]
     print(selected_dates)
     for selected_date in selected_dates:
         item = db.locations.find_one({'date': selected_date})
