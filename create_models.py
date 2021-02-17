@@ -5,7 +5,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from sklearn import preprocessing
-from tensorflow.keras.models import load_model
 from joblib import dump, load
 from utils import *
 from datetime import datetime

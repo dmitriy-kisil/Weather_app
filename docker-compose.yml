@@ -11,10 +11,3 @@ web:
     - "8000:8000"
   volumes:
     - .:/weather_app
-  links:
-    - db
-    - tensorflow
-db:
-  image: mongo:4.2.2
-tensorflow:
-  image: tensorflow/tensorflow:latest-gpu-jupyter

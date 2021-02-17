@@ -8,14 +8,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from sklearn import preprocessing
-from tensorflow.keras.models import load_model
 from joblib import dump, load
 import pandas as pd
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import RepeatVector
-from tensorflow.keras.layers import TimeDistributed
 from sklearn.metrics import mean_absolute_error
 from sklearn.preprocessing import PolynomialFeatures
 
