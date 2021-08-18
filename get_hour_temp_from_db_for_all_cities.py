@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import time
 from datetime import datetime, timedelta
 from utils import get_db
 from pyowm import OWM
@@ -44,7 +45,8 @@ def save_hour_temp_from_db_to_csv(db, filename):
     selected_dates = selected_dates[::-1]
     print(selected_dates)
     all_info = db.locations.find({'date': {'$in': selected_dates}}, {'date': 1, 'cities': 1, 'hour_temp': 1})
-    d = {}
+    start = time.time()
+    d = {'city': [], 'day': [], 'month': [], 'year': [], 'hour': [], 'temp': []}
     for item in all_info:
         cities = item['cities']
         selected_date = item['date']
@@ -56,11 +58,20 @@ def save_hour_temp_from_db_to_csv(db, filename):
             for hour in list(hour_temp.keys()):
                 temp = int(hour_temp[hour])
                 hour = int(hour.replace("_hour", ""))
-                new_row = {"city": city, "day": day, "month": month, "year": year, "hour": hour, 'temp': temp}
-                d[index] = new_row
+                d['city'].append(city)
+                d['day'].append(day)
+                d['month'].append(month)
+                d['year'].append(year)
+                d['hour'].append(hour)
+                d['temp'].append(temp)
                 index += 1
-    df = pd.DataFrame.from_dict(d, 'index')
-    # df.to_csv(filename)
+    print(f'Elapsed: {time.time() - start}')
+    df = pd.DataFrame({'city': pd.Series(d['city'], dtype='category'),
+                       'day': pd.Series(d['day'], dtype='int8'),
+                       'month': pd.Series(d['month'], dtype='int8'),
+                       'year': pd.Series(d['year'], dtype='int16'),
+                       'hour': pd.Series(d['hour'], dtype='int8'),
+                       'temp': pd.Series(d['temp'], dtype='int8')})
     return df
 
 
@@ -68,7 +79,7 @@ def get_polynomial_predictions(resulted_dict, city, df, map_to_int, degree, date
     df1 = df[df['city'] == map_to_int[city]]
     X = df1[['day', 'month', 'year', 'hour']]
 
-    y = df1['temp'].astype(int)
+    y = df1['temp']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     poly_features = PolynomialFeatures(degree=degree)
 
@@ -114,7 +125,7 @@ def get_linear_regression_predictions(resulted_dict, city, df, map_to_int, date_
 
     X = df1[['day', 'month', 'year', 'hour']]
 
-    y = df1['temp'].astype(int)
+    y = df1['temp']
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
