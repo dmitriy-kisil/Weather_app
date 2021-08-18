@@ -9,6 +9,7 @@ from geopy.geocoders import Nominatim
 from timezonefinder import TimezoneFinder
 from dotenv import load_dotenv, find_dotenv
 from utils import tz_diff, get_db
+from create_new_day3 import create_a_new_day
 from get_city_timezones import get_local_hours, update_temps
 
 load_dotenv()
@@ -95,30 +96,34 @@ def update_temps_hour():
         # db.locations.find_one_and_update({"date": new_date}, {'$unset': {'hour_temp': None}})
     # db.locations.find_one_and_update({"date": future_day}, {'$unset': {'hour_temp': None}})
     if local_next_day:
-        if not get_next_day.get('hour_temp'):
-            print('Create new hour_temp')
-            for city in local_next_day.keys():
-                local_date = dates_info[city]
-                index = cities.index(city)
-                current_temperature = list(local_next_day[city].values())[-1]
-                update_temps(db, local_date, current_temperature, index)
-            db.locations.find_one_and_update({"date": future_day}, {'$set': {'hour_temp': local_next_day}})
+        if not get_next_day:
+            print('Check if we need to create a new day')
+            create_a_new_day()
         else:
-            print('Use existed hour_temp')
-            hour_temp = get_next_day['hour_temp']
-            print(hour_temp)
-            for city in local_next_day.keys():
-                if hour_temp.get(city):
-                    hour_temp[city].update(local_next_day[city])
-                else:
-                    hour_temp[city] = local_next_day[city]
-                current_temperature = list(local_next_day[city].values())[-1]
-                local_date = dates_info[city]
-                index = cities.index(city)
-                update_temps(db, local_date, current_temperature, index)
-                # print(f'for city {city} with new temp {current_temperature} and index {index}')
-            db.locations.find_one_and_update({"date": future_day}, {'$set': {'hour_temp': hour_temp}})
-            # db.locations.find_one_and_update({"date": new_date}, {'$unset': {'hour_temp': None}})
+            if not get_next_day.get('hour_temp'):
+                print('Create new hour_temp')
+                for city in local_next_day.keys():
+                    local_date = dates_info[city]
+                    index = cities.index(city)
+                    current_temperature = list(local_next_day[city].values())[-1]
+                    update_temps(db, local_date, current_temperature, index)
+                db.locations.find_one_and_update({"date": future_day}, {'$set': {'hour_temp': local_next_day}})
+            else:
+                print('Use existed hour_temp')
+                hour_temp = get_next_day['hour_temp']
+                print(hour_temp)
+                for city in local_next_day.keys():
+                    if hour_temp.get(city):
+                        hour_temp[city].update(local_next_day[city])
+                    else:
+                        hour_temp[city] = local_next_day[city]
+                    current_temperature = list(local_next_day[city].values())[-1]
+                    local_date = dates_info[city]
+                    index = cities.index(city)
+                    update_temps(db, local_date, current_temperature, index)
+                    # print(f'for city {city} with new temp {current_temperature} and index {index}')
+                db.locations.find_one_and_update({"date": future_day}, {'$set': {'hour_temp': hour_temp}})
+                # db.locations.find_one_and_update({"date": new_date}, {'$unset': {'hour_temp': None}})
 
 
 if __name__ == "__main__":
